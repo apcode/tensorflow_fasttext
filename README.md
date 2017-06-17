@@ -1,6 +1,6 @@
 # FastText in Tensorflow
 
-This based on the ideas in Facebook's [FastText](https://github.com/facebookresearch/fastText) implemented in
+This based on the ideas in Facebook's [FastText](https://github.com/facebookresearch/fastText) but implemented in
 Tensorflow. However, it is not an exact replica of fastText. Instead I
 only implement the classifier using an embedding layer to classification.
 I do not intend to implement heirarchical softmax, instead using nce
@@ -9,7 +9,7 @@ loss for training.
 I may implement skipgram and cbow training later.
 
 ## Implemented:
-- classification of text
+- classification of text using word embeddings
 - char ngrams, hashed to n bins
 - train, test and predict programs
 
