@@ -2,9 +2,9 @@
 
 This is a version of Facebook's [FastText](https://github.com/facebookresearch/fastText) implemented in
 Tensorflow. However, it is not an exact replica of fastText. Instead I
-implement the main classifier using either a skipgram or cbow
-method. However I do not intend to implement heirarchical softmax,
-instead using nce loss for training.
+implement the main classifier using either a skipgram or cbow word
+vector embedding. I do not intend to implement heirarchical
+softmax, instead using nce loss for training.
 
 ## Implemented:
 - skipgram and cbow word and sentence vectors
