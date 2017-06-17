@@ -8,6 +8,8 @@ loss for training.
 
 I may implement skipgram and cbow training later.
 
+<< Still WIP >>
+
 ## Implemented:
 - classification of text using word embeddings
 - char ngrams, hashed to n bins
