@@ -4,6 +4,10 @@ Input data is in one of two formats:
 - facebook's format used in their fastText library.
 - two text files, one with input text per line, the other a label per line.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os.path
 import re
 import sys
@@ -81,14 +85,20 @@ def WriteExamples(examples, outputfile, num_shards):
         writer.write(record.SerializeToString())
 
 
-def WriteVocab(examples, vocabfile):
+def WriteVocab(examples, vocabfile, labelfile):
     words = set()
+    labels = set()
     for example in examples:
         words.update(example["text"])
+        labels.add(example["label"])
     with open(vocabfile, "w") as f:
         words = sorted(list(words))
         for word in words:
-            print >>f, word
+            f.write(word + '\n')
+    with open(labelfile, "w") as f:
+        labels = sorted(list(labels))
+        for label in labels:
+            f.write(str(label) + '\n')
 
 
 def main(_):
@@ -107,7 +117,8 @@ def main(_):
     outputfile = os.path.join(FLAGS.output_dir, fn + ".tfrecords")
     WriteExamples(examples, outputfile, FLAGS.num_shards)
     vocabfile = os.path.join(FLAGS.output_dir, fn + ".vocab")
-    WriteVocab(examples, vocabfile)
+    labelfile = os.path.join(FLAGS.output_dir, fn + ".labels")
+    WriteVocab(examples, vocabfile, labelfile)
 
 
 if __name__ == '__main__':
