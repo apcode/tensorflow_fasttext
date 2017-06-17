@@ -1,19 +1,20 @@
 # FastText in Tensorflow
 
-This is a version of Facebook's [FastText](https://github.com/facebookresearch/fastText) implemented in
+This based on the ideas in Facebook's [FastText](https://github.com/facebookresearch/fastText) implemented in
 Tensorflow. However, it is not an exact replica of fastText. Instead I
-implement the main classifier using either a skipgram or cbow word
-vector embedding. I do not intend to implement heirarchical
-softmax, instead using nce loss for training.
+only implement the classifier using an embedding layer to classification.
+I do not intend to implement heirarchical softmax, instead using nce
+loss for training.
+
+I may implement skipgram and cbow training later.
 
 ## Implemented:
-- skipgram and cbow word and sentence vectors
-- out of vocab word vectors 
 - classification of text
-- char ngrams, hashed to vectors (not yet implemented)
+- char ngrams, hashed to n bins
 - train, test and predict programs
 
 ## Not Implemented:
+- separate word vector training
 - heirarchical softmax (I'm using NCE (sampled) loss instead).
 - quantize models
 
@@ -30,10 +31,6 @@ Or, using a text file with one example per line with an extra file for labels:
 
     process_input.py --text_input=queries.txt --labels=labels.txt --output_dir=.
 
-To train a new skipgram word vector model:
-
-    train_vectors.py --skipgram --input=queries.tfrecords --output_dir=model
-    
 To train a text classifier:
 
     train_classifier.py --input=queries.tfrecords --output_dir=model
@@ -45,5 +42,3 @@ to what's provided in their repository.
 
     ./classification_example.sh
     ./classification_results.sh
-    ./word_vector_example.sh
-
