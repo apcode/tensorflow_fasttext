@@ -25,6 +25,8 @@ tf.flags.DEFINE_string("labels", None,
                        """Input text file containing one label for
                        classification  per line.
                        Must have --text_input defined.""")
+tf.flags.DEFINE_string("ngrams", None,
+                       "list of ngram sizes to create, e.g. --ngrams=2,3,4,5")
 tf.flags.DEFINE_string("output_dir", ".",
                        "Directory to store resulting vector models and checkpoints in")
 tf.flags.DEFINE_integer("num_shards", 1,
@@ -36,7 +38,14 @@ def CleanText(text):
     return word_tokenise(text.lower())
 
 
-def ParseFacebookInput(inputfile):
+def NGrams(text, ngrams):
+    nglist = []
+    for ng in ngrams:
+        nglist.extend([x[n:n+ng] for n in range(len(x)-ng+1)])
+    return nglist
+
+
+def ParseFacebookInput(inputfile, ngrams):
     examples = []
     for line in open(inputfile):
         words = line.split()
@@ -49,10 +58,12 @@ def ParseFacebookInput(inputfile):
             "text": words,
             "label": label
         })
+        if ngrams:
+            examples[-1]["ngrams"] = NGrams(" ".join(words), ngrams)
     return examples
 
 
-def ParseTextInput(textfile, labelsfie):
+def ParseTextInput(textfile, labelsfie, ngrams):
     examples = []
     with open(textfile) as f1, open(labelsfile) as f2:
         for text, label in izip(f1, f2):
@@ -60,6 +71,8 @@ def ParseTextInput(textfile, labelsfie):
                 "text": CleanText(text),
                 "label": int(label),
             })
+            if ngrams:
+                examples[-1]["ngrams"] = NGrams(" ".join(words), ngrams)
     return examples
 
 
@@ -107,12 +120,16 @@ def main(_):
         print >>sys.stderr, \
             "Error: You must define either facebook_input or both text_input and labels"
         sys.exit(1)
+    ngrams = None
+    if FLAGS.ngrams:
+        ngrams = [int(g) for g in FLAGS.ngrams.split(',')]
+        ngrams = [g for g in ngrams if (g > 1 and g < 7)]
     if FLAGS.facebook_input:
         inputfile = FLAGS.facebook_input
-        examples = ParseFacebookInput(FLAGS.facebook_input)
+        examples = ParseFacebookInput(FLAGS.facebook_input, ngrams)
     else:
         inputfile = FLAGS.text_input
-        examples = ParseTextInput(FLAGS.text_input, FLAGS.labels)
+        examples = ParseTextInput(FLAGS.text_input, FLAGS.labels, ngrams)
     fn, ext = os.path.splitext(inputfile)
     outputfile = os.path.join(FLAGS.output_dir, fn + ".tfrecords")
     WriteExamples(examples, outputfile, FLAGS.num_shards)

@@ -30,7 +30,7 @@ tf.flags.DEFINE_string("vocab_file", None, "Vocabulary file, one word per line")
 tf.flags.DEFINE_integer("vocab_size", None, "Number of words in vocabulary")
 tf.flags.DEFINE_integer("num_oov_vocab_buckets", 20,
                         "Number of hash buckets to use for OOV words")
-tf.flags.DEFINE_string("output_dir", ".",
+tf.flags.DEFINE_string("model_dir", ".",
                        "Output directory for checkpoints and summaries")
 
 tf.flags.DEFINE_integer("embedding_dimension", 10, "Dimension of word embedding")
@@ -46,6 +46,7 @@ tf.flags.DEFINE_integer("train_steps", 1000,
 tf.flags.DEFINE_integer("eval_steps", 100, "Number of eval steps")
 tf.flags.DEFINE_integer("checkpoint_steps", 1000,
                         "Steps between saving checkpoints")
+tf.flags.DEFINE_integer("num_threads", 1, "Number of reader threads")
 tf.flags.DEFINE_boolean("debug", False, "Turn on debug logging")
 FLAGS = tf.flags.FLAGS
 
@@ -66,21 +67,25 @@ def FeatureColumns(vocab_file,
             "ngrams", num_ngram_hash_buckets)
         ngrams = feature_column.embedding_column(
             ngram_ids, ngram_embedding_dimension)
-    return {"words": words, "ngrams": ngrams}
+    features = {"words": words}
+    if ngrams:
+        features["ngrams"] = ngrams
+    return features
 
 
 def InputFn(input_file, features, num_epochs=None):
     def input_fn():
-        features = tf.contrib.data.read_batch_features(
+        features = tf.contrib.learn.read_batch_features(
             input_file, FLAGS.batch_size, features,
             tf.python_io.TFRecordReader,
-            num_epochs=FLAGS.num_epochs)
+            num_epochs=FLAGS.num_epochs,
+            num_reader_threads=FLAGS.num_threads)
         labels = features.pop("label")
         return features, label
     return input_fn
 
 
-def Experiment(output_dir):
+def Experiment(model_dir):
     """Construct an experiment for training and evaluating a model.
     Saves checkpoints and exports the model for tf serving.
     """
@@ -97,7 +102,7 @@ def Experiment(output_dir):
         save_checkpoints_secs=None,
         save_checkpoints_steps=FLAGS.checkpoint_steps)
     model = tf.contrib.learn.LinearClassifier(
-        feature_columns, output_dir, n_classes=FLAGS.num_classes,
+        feature_columns, model_dir, n_classes=FLAGS.num_classes,
         optimizer=tf.train.AdamOptimizer(FLAGS.learning_rate),
         gradient_clip_norm=FLAGS.clip_gradient,
         config=config)
@@ -116,7 +121,7 @@ def Experiment(output_dir):
 
 
 def main(_):
-    learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.output_dir)
+    learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.model_dir)
 
 if __name__ == '__main__':
     if FLAGS.debug:
