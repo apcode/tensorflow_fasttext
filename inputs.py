@@ -33,7 +33,6 @@ def FeatureColumns(mode,
 def InputFn(input_file,
             features,
             batch_size,
-            mode,
             num_epochs=None,
             num_threads=1):
     def input_fn():

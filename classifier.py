@@ -14,20 +14,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import inputs
 import tensorflow as tf
 from tensorflow.contrib.layers import feature_column
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.learn.python.learn.estimators.run_config import RunConfig
 from tensorflow.contrib.learn.python.learn.metric_spec import MetricSpec
 
-from inputs import FeatureColumns, InputFn
-from model import Estimator
-
 
 tf.flags.DEFINE_string("train_records", None,
                        "Training file pattern for TFRecords, can use wildcards")
 tf.flags.DEFINE_string("eval_records", None,
                        "Evaluation file pattern for TFRecords, can use wildcards")
+tf.flags.DEFINE_string("predict_records", None,
+                       "File pattern for TFRecords to predict, can use wildcards")
 tf.flags.DEFINE_integer("label_file", None, "File containing output labels")
 tf.flags.DEFINE_string("vocab_file", None, "Vocabulary file, one word per line")
 tf.flags.DEFINE_integer("vocab_size", None, "Number of words in vocabulary")
@@ -54,32 +54,39 @@ tf.flags.DEFINE_boolean("debug", False, "Turn on debug logging")
 FLAGS = tf.flags.FLAGS
 
 
+def FeatureColumns(mode):
+    if not FLAGS.vocab_size:
+        FLAGS.vocab_size = len(open(FLAGS.vocab_file).readlines())
+    return inputs.FeatureColumns(
+        mode, FLAGS.vocab_file, FLAGS.vocab_size, FLAGS.num_oov_vocab_buckets,
+        FLAGS.embedding_dimension, FLAGS.num_ngram_buckets,
+        FLAGS.ngram_embedding_dimension)
+
+
+def Estimator(mode, feature_columns, model_dir, config=None):
+    num_classes = len(open(FLAGS.label_file).readlines())
+    model = tf.contrib.learn.LinearClassifier(
+        feature_columns, model_dir, n_classes=num_classes,
+        optimizer=tf.train.AdamOptimizer(learning_rate),
+        gradient_clip_norm=FLAGS.clip_gradient,
+        config=config)
+    return model
+
+
 def Experiment(model_dir):
     """Construct an experiment for training and evaluating a model.
     Saves checkpoints and exports the model for tf serving.
     """
+    mode = tf.estimator.ModeKeys.TRAIN
     config = tf.estimators.RunConfig(
         save_checkpoints_secs=None,
         save_checkpoints_steps=FLAGS.checkpoint_steps)
-    num_classes = len(open(FLAGS.label_file).readlines())
-    estimator = Estimator(
-        tf.estimators.ModeKeys.TRAIN,
-        FLAGS.vocab_size,
-        FLAGS.vocab_file,
-        FLAGS.num_oov_vocab_buckets,
-        FLAGS.embedding_dimension,
-        FLAGS.num_ngram_buckets,
-        FLAGS.ngram_embedding_dimension,
-        FLAGS.batch_size,
-        num_epochs=FLAGS.num_epochs,
-        model_dir,
-        FLAGS.learning_rate,
-        FLAGS.clip_gradient,
-        FLAGS.num_classes,
-        train_records=FLAGS.train_records,
-        eval_records=FLAGS.eval_records,
-        config=config,
-        label_file=FLAGS.label_file)
+    feature_columns = FeatureColumns(mode)
+    train_input = inputs.InputFn(FLAGS.train_records, feature_columns,
+                                 FLAGS.batch_size, mode, FLAGS.num_epochs)
+    eval_input = inputs.InputFn(FLAGS.eval_records, feature_columns, FLAGS.batch_size,
+                                mode, num_epochs=1)
+    estimator = Estimator(mode, feature_columns, model_dir, config)
     experiment = tf.contrib.learn.Experiment(
         estimator=estimator,
         train_input_fn=train_input,
@@ -94,8 +101,24 @@ def Experiment(model_dir):
     return experiment
 
 
+def Predict(model_dir):
+    mode = tf.estimator.ModeKeys.PREDICT
+    feature_columns = FeatureColumns(mode)
+    predict_input = inputs.InputFn(FLAGS.predict_records, feature_columns,
+                                   FLAGS.batch_size, mode, num_epochs=1)
+    estimator = Estimator(mode, feature_columns, model_dir)
+    results = estimator.predict(input_fn=predict_input)
+    with tf.python_io.tf_record_iterator(FLAGS.predict_records) as records:
+        for result, record in izip(results, records):
+            print("%d (%d) %s" % (result, record["label"], record["words"]))
+
+
 def main(_):
-    learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.model_dir)
+    if FLAGS.train_records:
+        learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.model_dir)
+    if FLAGS.predict_records:
+        Predict(FLAGS.model_dir)
+
 
 if __name__ == '__main__':
     if FLAGS.debug:

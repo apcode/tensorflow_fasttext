@@ -35,11 +35,20 @@ Or, using a text file with one example per line with an extra file for labels:
 
 To train a text classifier:
 
-    classifier_train.py --input=queries.tfrecords --model_dir=model
+    classifier.py \
+      --train_records=queries.tfrecords \
+      --eval_records=queries.tfrecords \
+      --label_file=labels.txt \
+      --vocab_file=vocab.txt \
+      --model_dir=model
 
 To predict classifications for text:
 
-    classifier_predict.py --eval_input=queries.tfrecords --model_dir=model
+    classifier.py
+      --predict_records=queries.tfrecords \
+      --label_file=labels.txt \
+      --vocab_file=vocab.txt \
+      --model_dir=model
 
 # Facebook Examples
 
