@@ -133,11 +133,10 @@ def main(_):
     else:
         inputfile = FLAGS.text_input
         examples = ParseTextInput(FLAGS.text_input, FLAGS.labels, ngrams)
-    fn, ext = os.path.splitext(inputfile)
-    outputfile = os.path.join(FLAGS.output_dir, fn + ".tfrecords")
+    outputfile = os.path.join(FLAGS.output_dir, inputfile + ".tfrecords")
     WriteExamples(examples, outputfile, FLAGS.num_shards)
-    vocabfile = os.path.join(FLAGS.output_dir, fn + ".vocab")
-    labelfile = os.path.join(FLAGS.output_dir, fn + ".labels")
+    vocabfile = os.path.join(FLAGS.output_dir, inputfile + ".vocab")
+    labelfile = os.path.join(FLAGS.output_dir, inputfile + ".labels")
     WriteVocab(examples, vocabfile, labelfile)
 
 
