@@ -12,7 +12,7 @@ import os.path
 import re
 import sys
 import tensorflow as tf
-from collection import Counter
+from collections import Counter
 from itertools import izip
 from nltk.tokenize import word_tokenize
 
@@ -96,7 +96,7 @@ def WriteExamples(examples, outputfile, num_shards):
         record.features.feature["text"].bytes_list.value.extend(example["text"])
         record.features.feature["label"].int64_list.value.append(example["label"])
         if "ngrams" in example:
-            records.features.feature["ngrams"].byes_list.value.extend(example["ngrams"])
+            record.features.feature["ngrams"].bytes_list.value.extend(example["ngrams"])
         writer.write(record.SerializeToString())
 
 
@@ -110,7 +110,7 @@ def WriteVocab(examples, vocabfile, labelfile):
         # Write out vocab in most common first order
         # We need this as NCE loss in TF uses Zipf distribution
         for word in words.most_common():
-            f.write(word + '\n')
+            f.write(word[0] + '\n')
     with open(labelfile, "w") as f:
         labels = sorted(list(labels))
         for label in labels:
