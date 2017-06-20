@@ -26,22 +26,22 @@ def FeatureColumns(mode,
     if ngrams:
         features["ngrams"] = ngrams
     if mode != tf.estimator.ModeKeys.PREDICT:
-        features["labels"] = tf.feature_column.numerical_column("labels")
+        features["label"] = tf.feature_column.numeric_column("label")
     return features
 
 
 def InputFn(input_file,
-            features,
+            feature_columns,
             batch_size,
             num_epochs=None,
             num_threads=1):
     def input_fn():
         features = tf.contrib.learn.read_batch_features(
-            input_file, batch_size, features,
-            tf.python_io.TFRecordReader,
-            num_epochs=1, num_reader_threads=num_threads)
-        labels = None
-        if "labels" in features:
-            labels = features.pop("label")
-        return features, labels
+            input_file, batch_size, feature_columns,
+            tf.TFRecordReader,
+            num_epochs=1, reader_num_threads=num_threads)
+        label = None
+        if "label" in features:
+            label = features.pop("label")
+        return features, label
     return input_fn
