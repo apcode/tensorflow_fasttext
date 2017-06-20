@@ -26,7 +26,7 @@ def FeatureColumns(mode,
     if ngrams:
         features["ngrams"] = ngrams
     if mode != tf.estimator.ModeKeys.PREDICT:
-        features["label"] = tf.feature_column.numeric_column("label")
+        features["label"] = tf.feature_column.numeric_column("label", dtype=tf.int64)
     return features
 
 
