@@ -12,6 +12,7 @@ import os.path
 import re
 import sys
 import tensorflow as tf
+from collection import Counter
 from itertools import izip
 from nltk.tokenize import word_tokenize
 
@@ -38,10 +39,11 @@ def CleanText(text):
     return word_tokenise(text.lower())
 
 
-def NGrams(text, ngrams):
+def NGrams(words, ngrams):
     nglist = []
-    for ng in ngrams:
-        nglist.extend([x[n:n+ng] for n in range(len(x)-ng+1)])
+    for word in words:
+        for ng in ngrams:
+            nglist.extend([word[n:n+ng] for n in range(len(word)-ng+1)])
     return nglist
 
 
@@ -59,7 +61,7 @@ def ParseFacebookInput(inputfile, ngrams):
             "label": label
         })
         if ngrams:
-            examples[-1]["ngrams"] = NGrams(" ".join(words), ngrams)
+            examples[-1]["ngrams"] = NGrams(words, ngrams)
     return examples
 
 
@@ -72,7 +74,7 @@ def ParseTextInput(textfile, labelsfie, ngrams):
                 "label": int(label),
             })
             if ngrams:
-                examples[-1]["ngrams"] = NGrams(" ".join(words), ngrams)
+                examples[-1]["ngrams"] = NGrams(words, ngrams)
     return examples
 
 
@@ -99,14 +101,15 @@ def WriteExamples(examples, outputfile, num_shards):
 
 
 def WriteVocab(examples, vocabfile, labelfile):
-    words = set()
+    words = Counter()
     labels = set()
     for example in examples:
         words.update(example["text"])
         labels.add(example["label"])
     with open(vocabfile, "w") as f:
-        words = sorted(list(words))
-        for word in words:
+        # Write out vocab in most common first order
+        # We need this as NCE loss in TF uses Zipf distribution
+        for word in words.most_common():
             f.write(word + '\n')
     with open(labelfile, "w") as f:
         labels = sorted(list(labels))

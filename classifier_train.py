@@ -15,11 +15,14 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-
 from tensorflow.contrib.layers import feature_column
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.learn.python.learn.estimators.run_config import RunConfig
 from tensorflow.contrib.learn.python.learn.metric_spec import MetricSpec
+
+from inputs import FeatureColumns, InputFn
+from model import Estimator
+
 
 tf.flags.DEFINE_string("train_records", None,
                        "Training file pattern for TFRecords, can use wildcards")
@@ -51,63 +54,34 @@ tf.flags.DEFINE_boolean("debug", False, "Turn on debug logging")
 FLAGS = tf.flags.FLAGS
 
 
-def FeatureColumns(vocab_file,
-                   vocab_size,
-                   num_oov_vocab_buckets,
-                   embedding_dimension,
-                   num_ngram_hash_buckets=None,
-                   ngram_embedding_dimension=None):
-    word_ids = feature_column.categorical_column_with_vocabulary_file(
-        "words", vocab_file, vocab_size, num_oov_buckets=num_oov_vocab_buckets)
-    words = feature_column.embedding_column(
-        word_ids, embedding_dimension, combiner='sum')
-    ngrams = None
-    if num_ngram_hash_buckets is not None:
-        ngram_ids = feature_column.categorical_column_with_hash_bucket(
-            "ngrams", num_ngram_hash_buckets)
-        ngrams = feature_column.embedding_column(
-            ngram_ids, ngram_embedding_dimension)
-    features = {"words": words}
-    if ngrams:
-        features["ngrams"] = ngrams
-    return features
-
-
-def InputFn(input_file, features, num_epochs=None):
-    def input_fn():
-        features = tf.contrib.learn.read_batch_features(
-            input_file, FLAGS.batch_size, features,
-            tf.python_io.TFRecordReader,
-            num_epochs=FLAGS.num_epochs,
-            num_reader_threads=FLAGS.num_threads)
-        labels = features.pop("label")
-        return features, label
-    return input_fn
-
-
 def Experiment(model_dir):
     """Construct an experiment for training and evaluating a model.
     Saves checkpoints and exports the model for tf serving.
     """
-    if FLAGS.vocab_size is None:
-        FLAGS.vocab_size = len(open(FLAGS.vocab_file).readlines())
-    feature_columns = FeatureColumns(
-        FLAGS.vocab_file, FLAGS.vocab_size, FLAGS.num_oov_vocab_buckets,
-        FLAGS.embedding_dimension, FLAGS.num_ngram_buckets,
-        FLAGS.ngram_embedding_dimension)
-    train_input = InputFn(FLAGS.train_records, feature_columns, FLAGS.num_epochs)
-    eval_input = InputFn(FLAGS.eval_records, feature_columns, num_epochs=1)
-    num_classes = len(open(FLAGS.label_file).readlines())
-    config = RunConfig(
+    config = tf.estimators.RunConfig(
         save_checkpoints_secs=None,
         save_checkpoints_steps=FLAGS.checkpoint_steps)
-    model = tf.contrib.learn.LinearClassifier(
-        feature_columns, model_dir, n_classes=FLAGS.num_classes,
-        optimizer=tf.train.AdamOptimizer(FLAGS.learning_rate),
-        gradient_clip_norm=FLAGS.clip_gradient,
-        config=config)
+    num_classes = len(open(FLAGS.label_file).readlines())
+    estimator = Estimator(
+        tf.estimators.ModeKeys.TRAIN,
+        FLAGS.vocab_size,
+        FLAGS.vocab_file,
+        FLAGS.num_oov_vocab_buckets,
+        FLAGS.embedding_dimension,
+        FLAGS.num_ngram_buckets,
+        FLAGS.ngram_embedding_dimension,
+        FLAGS.batch_size,
+        num_epochs=FLAGS.num_epochs,
+        model_dir,
+        FLAGS.learning_rate,
+        FLAGS.clip_gradient,
+        FLAGS.num_classes,
+        train_records=FLAGS.train_records,
+        eval_records=FLAGS.eval_records,
+        config=config,
+        label_file=FLAGS.label_file)
     experiment = tf.contrib.learn.Experiment(
-        estimator=model,
+        estimator=estimator,
         train_input_fn=train_input,
         eval_input_fn=eval_input,
         train_steps=FLAGS.train_steps,
