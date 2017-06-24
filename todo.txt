@@ -1,7 +1,5 @@
 # Some todo items
 
-- running distributed training in a cluster
-- save models ready for reuse, e.g. include signature defs
 - create script to do predictions using saved model
 - create script to provide phrase embedding vector
 
