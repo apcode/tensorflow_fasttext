@@ -60,6 +60,14 @@ following to use that model for predictions:
       --text="some text to classify"
       --signature_def=proba
 
+To export the embedding layer you can export from predictor. Note,
+this will only be the text embedding, not the ngram embeddings.
+
+    predictor.py
+      --saved_model=model/12345678
+      --text="some text to classify"
+      --signature_def=embedding
+
 Use the provided script to train easily:
 
     train_classifier.sh path-to-data-directory

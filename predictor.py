@@ -60,6 +60,9 @@ def main(_):
     if FLAGS.signature_def == "proba":
         print("Proba:", outputs[0])
         print("Class(1-N):", np.argmax(outputs[0]) + 1)
+    elif FLAGS.signature_def == "embedding":
+        print(outputs[0])
+
 
 if __name__ == '__main__':
     if FLAGS.debug:
