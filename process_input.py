@@ -13,7 +13,7 @@ import re
 import sys
 import tensorflow as tf
 from collections import Counter
-from itertools import izip
+from six.moves import zip
 from nltk.tokenize import word_tokenize
 
 
@@ -68,7 +68,7 @@ def ParseFacebookInput(inputfile, ngrams):
 def ParseTextInput(textfile, labelsfie, ngrams):
     examples = []
     with open(textfile) as f1, open(labelsfile) as f2:
-        for text, label in izip(f1, f2):
+        for text, label in zip(f1, f2):
             examples.append({
                 "text": CleanText(text),
                 "label": int(label) - 1,
@@ -93,10 +93,12 @@ def WriteExamples(examples, outputfile, num_shards):
             writer = tf.python_io.TFRecordWriter(outputfile + '-%d-of-%d' % \
                                                  (shard, num_shards))
         record = tf.train.Example()
-        record.features.feature["text"].bytes_list.value.extend(example["text"])
+        text = [tf.compat.as_bytes(x) for x in example["text"]]
+        record.features.feature["text"].bytes_list.value.extend(text)
         record.features.feature["label"].int64_list.value.append(example["label"])
         if "ngrams" in example:
-            record.features.feature["ngrams"].bytes_list.value.extend(example["ngrams"])
+            ngrams = [tf.compat.as_bytes(x) for x in example["ngrams"]]
+            record.features.feature["ngrams"].bytes_list.value.extend(ngrams)
         writer.write(record.SerializeToString())
 
 
