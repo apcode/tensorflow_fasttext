@@ -3,6 +3,7 @@
 
 DATADIR=$1
 OUTPUT=$DATADIR/model
+EXPORT_DIR=$DATADIR/model
 TRAIN_FILE=$DATADIR/ag_news.train.tfrecords-1-of-1
 TEST_FILE=$DATADIR/ag_news.test.tfrecords-1-of-1
 LABELS=$DATADIR/ag_news.train.labels

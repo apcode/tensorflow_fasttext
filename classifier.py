@@ -35,6 +35,7 @@ tf.flags.DEFINE_integer("num_oov_vocab_buckets", 20,
                         "Number of hash buckets to use for OOV words")
 tf.flags.DEFINE_string("model_dir", ".",
                        "Output directory for checkpoints and summaries")
+tf.flags.DEFINE_string("export_dir", None, "Directory to store savedmodel")
 
 tf.flags.DEFINE_integer("embedding_dimension", 10, "Dimension of word embedding")
 tf.flags.DEFINE_boolean("use_ngrams", False, "Use character ngrams in embedding")
@@ -112,16 +113,19 @@ def BasicEstimator(model_dir, config=None):
         logits = tf.contrib.layers.fully_connected(
             inputs=input_layer, num_outputs=num_classes,
             activation_fn=None)
-        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels, logits=logits))
-        # Squeeze dimensions from labels and switch to 0-offset
-        labels = tf.squeeze(labels, -1)
-        opt = tf.train.AdamOptimizer(params["learning_rate"])
-        train_op = opt.minimize(loss, global_step=tf.train.get_global_step())
         predictions = tf.argmax(logits, axis=-1)
-        metrics = {
-            "accuracy": tf.metrics.accuracy(labels, predictions)
-        }
+        loss, train_op = None, None
+        metrics = {}
+        if mode != tf.estimator.ModeKeys.PREDICT:
+            loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
+                labels=labels, logits=logits))
+            # Squeeze dimensions from labels and switch to 0-offset
+            labels = tf.squeeze(labels, -1)
+            opt = tf.train.AdamOptimizer(params["learning_rate"])
+            train_op = opt.minimize(loss, global_step=tf.train.get_global_step())
+            metrics = {
+                "accuracy": tf.metrics.accuracy(labels, predictions)
+            }
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, loss=loss, train_op=train_op,
             eval_metric_ops=metrics)
@@ -146,6 +150,9 @@ def Experiment(output_dir):
     train_input = InputFn(mode, FLAGS.train_records)
     eval_input = InputFn(mode, FLAGS.eval_records)
     estimator = ContribEstimator(output_dir, config)
+    export_strategies = []
+    if FLAGS.export_dir:
+        export_strategies.append(MakeExportStrategy())
     experiment = tf.contrib.learn.Experiment(
         estimator=estimator,
         train_input_fn=train_input,
@@ -156,7 +163,8 @@ def Experiment(output_dir):
         eval_metrics=None,
         continuous_eval_throttle_secs=10,
         min_eval_frequency=1000,
-        train_monitors=None)
+        train_monitors=None,
+        export_strategies=export_strategies)
     return experiment
 
 
@@ -173,6 +181,22 @@ def FastTrain():
     result = estimator.evaluate(input_fn=eval_input, steps=FLAGS.train_steps, hooks=None)
     print(result)
     print("DONE")
+    if FLAGS.export_dir:
+        print("EXPORTING")
+        export_strategy = MakeExportStrategy()
+        export_strategy.export(estimator, FLAGS.export_dir)
+
+
+def MakeExportStrategy():
+    def serving_input_fn():
+        features = {
+            "text": tf.placeholder(dtype=tf.string, shape=[None], name='text')
+        }
+        if FLAGS.use_ngrams:
+            features["ngrams"] = tf.placeholder(dtype=tf.string, shape=[None], name='ngrams')
+        return tf.contrib.learn.utils.input_fn_utils.InputFnOps(
+            features, None, default_inputs=features)
+    return tf.contrib.learn.make_export_strategy(serving_input_fn)
 
 
 def main(_):
@@ -180,10 +204,8 @@ def main(_):
         FLAGS.vocab_size = len(open(FLAGS.vocab_file).readlines())
     if FLAGS.fast:
         FastTrain()
-        return
-    if FLAGS.train_records:
+    elif FLAGS.train_records:
         learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.model_dir)
-
 
 if __name__ == '__main__':
     if FLAGS.debug:
