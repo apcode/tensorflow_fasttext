@@ -1,13 +1,34 @@
-#!/bin/bash -v
-# Usage: train_classiifer.sh data_dir
+#!/bin/bash
+
+[ -d "$1" ] || {
+    echo "Usage: train_classifer.sh data_dir [dataset_name=ag_news]"
+    exit 1
+}
+
+set +v
 
 DATADIR=$1
-OUTPUT=$DATADIR/model
-EXPORT_DIR=$DATADIR/model
-TRAIN_FILE=$DATADIR/ag_news.train.tfrecords-1-of-1
-TEST_FILE=$DATADIR/ag_news.test.tfrecords-1-of-1
-LABELS=$DATADIR/ag_news.train.labels
-VOCAB=$DATADIR/ag_news.train.vocab
+DATASET=${2:-ag_news}
+OUTPUT=$DATADIR/models/${DATASET}
+EXPORT_DIR=$DATADIR/models/${DATASET}
+INPUT_TRAIN_FILE=$DATADIR/${DATASET}.train
+INPUT_TEST_FILE=$DATADIR/${DATASET}.test
+TRAIN_FILE=$DATADIR/${DATASET}.train.tfrecords-1-of-1
+TRAIN_FILE=$DATADIR/${DATASET}.train.tfrecords-1-of-1
+TEST_FILE=$DATADIR/${DATASET}.test.tfrecords-1-of-1
+
+if [ ! -f ${TRAIN_FILE} ]; then
+    echo Processing training dataset file
+    python process_input.py --facebook_input=${INPUT_TRAIN_FILE} --ngrams=2,3,4
+fi
+
+if [ ! -f ${TEST_FILE} ]; then
+    echo Processing test dataset file
+    python process_input.py --facebook_input=${INPUT_TEST_FILE} --ngrams=2,3,4
+fi
+
+LABELS=$DATADIR/${DATASET}.train.labels
+VOCAB=$DATADIR/${DATASET}.train.vocab
 VOCAB_SIZE=`cat $VOCAB | wc -l | sed -e "s/[ \t]//g"`
 
 echo $VOCAB
