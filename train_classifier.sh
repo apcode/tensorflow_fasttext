@@ -9,6 +9,10 @@ LABELS=$DATADIR/ag_news.train.labels
 VOCAB=$DATADIR/ag_news.train.vocab
 VOCAB_SIZE=`cat $VOCAB | wc -l | sed -e "s/[ \t]//g"`
 
+echo WARNING REMOVING CHECKPOINTS
+echo $DATADIR/model
+rm -rf  $DATADIR/model
+
 python classifier.py \
     --train_records=$TRAIN_FILE \
     --eval_records=$TEST_FILE \
@@ -18,10 +22,15 @@ python classifier.py \
     --num_oov_vocab_buckets=100 \
     --model_dir=$OUTPUT \
     --embedding_dimension=10 \
-    --num_ngram_buckets=1000000 \
+    --num_ngram_buckets=100000 \
     --ngram_embedding_dimension=10 \
     --learning_rate=0.001 \
     --batch_size=128 \
-    --train_steps=100000 \
+    --train_steps=1000 \
     --eval_steps=100 \
-    --num_threads=4
+    --num_epochs=1 \
+    --num_threads=1 \
+    --nouse_ngrams \
+    --fast \
+    --debug
+

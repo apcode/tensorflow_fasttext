@@ -58,7 +58,7 @@ def ParseFacebookInput(inputfile, ngrams):
         words = words[2:]
         examples.append({
             "text": words,
-            "label": label
+            "label": label - 1
         })
         if ngrams:
             examples[-1]["ngrams"] = NGrams(words, ngrams)
@@ -71,7 +71,7 @@ def ParseTextInput(textfile, labelsfie, ngrams):
         for text, label in izip(f1, f2):
             examples.append({
                 "text": CleanText(text),
-                "label": int(label),
+                "label": int(label) - 1,
             })
             if ngrams:
                 examples[-1]["ngrams"] = NGrams(words, ngrams)
