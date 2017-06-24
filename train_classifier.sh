@@ -9,6 +9,9 @@ LABELS=$DATADIR/ag_news.train.labels
 VOCAB=$DATADIR/ag_news.train.vocab
 VOCAB_SIZE=`cat $VOCAB | wc -l | sed -e "s/[ \t]//g"`
 
+echo $VOCAB
+echo $VOCAB_SIZE
+
 echo WARNING REMOVING CHECKPOINTS
 echo $DATADIR/model
 rm -rf  $DATADIR/model
@@ -31,6 +34,7 @@ python classifier.py \
     --num_epochs=1 \
     --num_threads=1 \
     --nouse_ngrams \
+    --nolog_device_placement \
     --fast \
     --debug
 

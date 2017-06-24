@@ -53,6 +53,7 @@ tf.flags.DEFINE_integer("num_epochs", None, "Number of training data epochs")
 tf.flags.DEFINE_integer("checkpoint_steps", 1000,
                         "Steps between saving checkpoints")
 tf.flags.DEFINE_integer("num_threads", 1, "Number of reader threads")
+tf.flags.DEFINE_boolean("log_device_placement", False, "log where ops are located")
 tf.flags.DEFINE_boolean("debug", False, "Debug")
 FLAGS = tf.flags.FLAGS
 
@@ -92,7 +93,8 @@ def BasicEstimator(model_dir, config=None):
             FLAGS.vocab_file, FLAGS.num_oov_vocab_buckets, FLAGS.vocab_size)
         text_ids = text_lookup_table.lookup(features["text"])
         text_embedding_w = tf.Variable(tf.random_uniform(
-            [FLAGS.vocab_size, FLAGS.embedding_dimension], -1.0, 1.0))
+            [FLAGS.vocab_size + FLAGS.num_oov_vocab_buckets, FLAGS.embedding_dimension],
+            -1.0, 1.0))
         text_embedding = tf.reduce_mean(tf.nn.embedding_lookup(
             text_embedding_w, text_ids), axis=-2)
         text_embedding = tf.expand_dims(text_embedding, -2)
@@ -124,7 +126,7 @@ def BasicEstimator(model_dir, config=None):
             mode, predictions=predictions, loss=loss, train_op=train_op,
             eval_metric_ops=metrics)
     session_config = tf.ConfigProto(
-        log_device_placement=False)
+        log_device_placement=FLAGS.log_device_placement)
     config = tf.contrib.learn.RunConfig(
         save_checkpoints_secs=None,
         save_checkpoints_steps=FLAGS.checkpoint_steps,
