@@ -24,7 +24,7 @@ python classifier.py \
     --embedding_dimension=10 \
     --num_ngram_buckets=100000 \
     --ngram_embedding_dimension=10 \
-    --learning_rate=0.001 \
+    --learning_rate=0.01 \
     --batch_size=128 \
     --train_steps=1000 \
     --eval_steps=100 \

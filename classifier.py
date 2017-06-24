@@ -43,7 +43,7 @@ tf.flags.DEFINE_integer("num_ngram_buckets", 1000000,
 tf.flags.DEFINE_integer("ngram_embedding_dimension", 10, "Dimension of word embedding")
 
 tf.flags.DEFINE_boolean("fast", False, "Run fastest training without full experiment")
-tf.flags.DEFINE_float("learning_rate", 0.01, "Learning rate for training")
+tf.flags.DEFINE_float("learning_rate", 0.001, "Learning rate for training")
 tf.flags.DEFINE_float("clip_gradient", 5.0, "Clip gradient norm to this ratio")
 tf.flags.DEFINE_integer("batch_size", 128, "Training minibatch size")
 tf.flags.DEFINE_integer("train_steps", 1000,
@@ -114,11 +114,15 @@ def BasicEstimator(model_dir, config=None):
             labels=labels, logits=logits))
         # Squeeze dimensions from labels and switch to 0-offset
         labels = tf.squeeze(labels, -1)
-        opt = tf.train.AdamOptimizer()
-        train_op = opt.minimize(loss)
-        predictions = tf.argmax(logits)
+        opt = tf.train.AdamOptimizer(params["learning_rate"])
+        train_op = opt.minimize(loss, global_step=tf.train.get_global_step())
+        predictions = tf.argmax(logits, axis=-1)
+        metrics = {
+            "accuracy": tf.metrics.accuracy(labels, predictions)
+        }
         return tf.estimator.EstimatorSpec(
-            mode, predictions=predictions, loss=loss, train_op=train_op)
+            mode, predictions=predictions, loss=loss, train_op=train_op,
+            eval_metric_ops=metrics)
     session_config = tf.ConfigProto(
         log_device_placement=False)
     config = tf.contrib.learn.RunConfig(
