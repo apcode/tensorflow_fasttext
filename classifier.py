@@ -126,9 +126,13 @@ def BasicEstimator(model_dir, config=None):
             metrics = {
                 "accuracy": tf.metrics.accuracy(labels, predictions)
             }
+        exports = {}
+        if FLAGS.export_dir:
+            probs = tf.nn.softmax(logits)
+            exports["proba"] = (tf.estimator.export.ClassificationOutput(scores=probs))
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, loss=loss, train_op=train_op,
-            eval_metric_ops=metrics)
+            eval_metric_ops=metrics, export_outputs=exports)
     session_config = tf.ConfigProto(
         log_device_placement=FLAGS.log_device_placement)
     config = tf.contrib.learn.RunConfig(
@@ -163,8 +167,7 @@ def Experiment(output_dir):
         eval_metrics=None,
         continuous_eval_throttle_secs=10,
         min_eval_frequency=1000,
-        train_monitors=None,
-        export_strategies=export_strategies)
+        train_monitors=None)
     return experiment
 
 
@@ -183,20 +186,17 @@ def FastTrain():
     print("DONE")
     if FLAGS.export_dir:
         print("EXPORTING")
-        export_strategy = MakeExportStrategy()
-        export_strategy.export(estimator, FLAGS.export_dir)
+        estimator.export_savedmodel(FLAGS.export_dir, ExportFn())
 
 
-def MakeExportStrategy():
-    def serving_input_fn():
-        features = {
-            "text": tf.placeholder(dtype=tf.string, shape=[None], name='text')
-        }
-        if FLAGS.use_ngrams:
-            features["ngrams"] = tf.placeholder(dtype=tf.string, shape=[None], name='ngrams')
-        return tf.contrib.learn.utils.input_fn_utils.InputFnOps(
-            features, None, default_inputs=features)
-    return tf.contrib.learn.make_export_strategy(serving_input_fn)
+def ExportFn():
+    features = {
+        "text": tf.placeholder(dtype=tf.string, shape=[None], name='text')
+    }
+    if FLAGS.use_ngrams:
+        features["ngrams"] = tf.placeholder(
+            dtype=tf.string, shape=[None], name='ngrams')
+    return tf.estimator.export.build_raw_serving_input_receiver_fn(features)
 
 
 def main(_):
@@ -205,6 +205,9 @@ def main(_):
     if FLAGS.fast:
         FastTrain()
     elif FLAGS.train_records:
+        if FLAGS.export_dir:
+            tf.logging.warn(
+                "Exporting savedmodels not supported for contrib experiment, --nofast")
         learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.model_dir)
 
 if __name__ == '__main__':

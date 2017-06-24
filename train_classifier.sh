@@ -21,6 +21,7 @@ python classifier.py \
     --vocab_size=$VOCAB_SIZE \
     --num_oov_vocab_buckets=100 \
     --model_dir=$OUTPUT \
+    --export_dir=$EXPORT_DIR \
     --embedding_dimension=10 \
     --num_ngram_buckets=100000 \
     --ngram_embedding_dimension=10 \
