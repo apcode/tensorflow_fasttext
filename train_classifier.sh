@@ -12,10 +12,6 @@ VOCAB_SIZE=`cat $VOCAB | wc -l | sed -e "s/[ \t]//g"`
 echo $VOCAB
 echo $VOCAB_SIZE
 
-echo WARNING REMOVING CHECKPOINTS
-echo $DATADIR/model
-rm -rf  $DATADIR/model
-
 python classifier.py \
     --train_records=$TRAIN_FILE \
     --eval_records=$TEST_FILE \

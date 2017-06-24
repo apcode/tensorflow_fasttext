@@ -1,23 +1,30 @@
 # FastText in Tensorflow
 
 This based on the ideas in Facebook's [FastText](https://github.com/facebookresearch/fastText) but implemented in
-Tensorflow. However, it is not an exact replica of fastText. Instead I
-only implement the classifier using an embedding layer to classification.
-I do not intend to implement heirarchical softmax, instead using nce
-loss for training.
+Tensorflow. However, it is not an exact replica of fastText.
 
-I may implement skipgram and cbow training later.
+Classification is done by embedding each word, taking the mean
+embedding over the full text and classifying that using a linear
+classifier. The embedding is trained with the classifier.  You can
+also specify to use 2+ character ngrams. These ngrams get hashed then
+embedded in a similar manner to the orginal words. Note, ngrams make
+training much slower but only make marginal improvements in
+performance, at least in English.
+
+I may implement skipgram and cbow training later. Or preloading
+embedding tables.
 
 << Still WIP >>
 
 ## Implemented:
 - classification of text using word embeddings
 - char ngrams, hashed to n bins
-- train, test and predict programs
+- train and test program
+- preprocess facebook format, or text input into tensorflow records
 
 ## Not Implemented:
 - separate word vector training
-- heirarchical softmax (I'm using NCE (sampled) loss instead).
+- heirarchical softmax.
 - quantize models
 
 # Usage
@@ -50,7 +57,13 @@ To predict classifications for text:
       --vocab_file=vocab.txt \
       --model_dir=model
 
+Use the provided script to train easily:
+
+    train_classifier.sh path-to-data-directory
+
 # Facebook Examples
+
+<< NOT IMPLEMENTED YET >>
 
 You can compare with Facebook's fastText by running similar examples
 to what's provided in their repository.
