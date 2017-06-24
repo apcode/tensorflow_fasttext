@@ -47,15 +47,18 @@ To train a text classifier:
       --eval_records=queries.tfrecords \
       --label_file=labels.txt \
       --vocab_file=vocab.txt \
-      --model_dir=model
+      --model_dir=model \
+      --export_dir=model
 
-To predict classifications for text:
+To predict classifications for text, use a saved_model from
+classifier. `classifier.py --export_dir` stores a saved model in a
+numbered directory below `export_dir`. Pass this directory to the
+following to use that model for predictions:
 
-    classifier.py
-      --predict_records=queries.tfrecords \
-      --label_file=labels.txt \
-      --vocab_file=vocab.txt \
-      --model_dir=model
+    predictor.py
+      --saved_model=model/12345678
+      --text="some text to classify"
+      --signature_def=proba
 
 Use the provided script to train easily:
 
