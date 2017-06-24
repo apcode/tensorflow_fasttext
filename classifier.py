@@ -129,7 +129,10 @@ def BasicEstimator(model_dir, config=None):
         exports = {}
         if FLAGS.export_dir:
             probs = tf.nn.softmax(logits)
-            exports["proba"] = (tf.estimator.export.ClassificationOutput(scores=probs))
+            exports["proba"] = tf.estimator.export.ClassificationOutput(scores=probs)
+            exports["embedding"] = tf.estimator.export.RegressionOutput(value=text_embedding)
+            exports[tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
+                    tf.estimator.export.ClassificationOutput(scores=probs)
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions, loss=loss, train_op=train_op,
             eval_metric_ops=metrics, export_outputs=exports)

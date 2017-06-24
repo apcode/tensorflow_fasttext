@@ -1,7 +1,7 @@
 # Some todo items
 
 - create script to do predictions using saved model
-- create script to provide phrase embedding vector
+- provide phrase embedding vector from prediction script - in saved model
 
 - replicate experiments from facebook paper, times and accuracy
 - provide scripts to download and process facebook's data
