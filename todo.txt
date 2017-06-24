@@ -1,8 +1,5 @@
 # Some todo items
 
-- create script to do predictions using saved model
-- provide phrase embedding vector from prediction script - in saved model
-
 - replicate experiments from facebook paper, times and accuracy
 - provide scripts to download and process facebook's data
 - allow preloading of word embeddings, say from word2ved cbow and skipgrams
