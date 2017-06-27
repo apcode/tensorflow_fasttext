@@ -56,7 +56,9 @@ def test_reading_inputs():
         text_ids = text_lookup_table.lookup(dense)
         text_embedding = tf.reduce_mean(tf.nn.embedding_lookup(
             text_embedding_w, text_ids), axis=-2)
+        print text_embedding.shape
         text_embedding = tf.expand_dims(text_embedding, -2)
+        print text_embedding.shape
         num_classes = 2
         logits = tf.contrib.layers.fully_connected(
             inputs=text_embedding, num_outputs=4,
@@ -68,6 +70,11 @@ def test_reading_inputs():
         if n > 50:
             break
         n += 1
+        # Test bow_encoder
+        text_embedding_2 = tf.contrib.layers.bow_encoder(
+            text_ids, VOCAB_SIZE, ESZ)
+        print text_embedding_2.shape
+        print sess.run(text_embedding_2)
 
 
 if __name__ == '__main__':
