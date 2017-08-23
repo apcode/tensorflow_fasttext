@@ -48,6 +48,10 @@ def NGrams(words, ngrams):
 
 
 def ParseFacebookInput(inputfile, ngrams):
+    """Parse input in the format used by facebook FastText.
+    labels are formatted as __label__1
+    where the label values start at 1.
+    """
     examples = []
     for line in open(inputfile):
         words = line.split()
@@ -66,12 +70,15 @@ def ParseFacebookInput(inputfile, ngrams):
 
 
 def ParseTextInput(textfile, labelsfie, ngrams):
+    """Parse input from two text files: text and labels.
+    labels are specified 0-offset one per line.
+    """
     examples = []
     with open(textfile) as f1, open(labelsfile) as f2:
         for text, label in zip(f1, f2):
             examples.append({
                 "text": CleanText(text),
-                "label": int(label) - 1,
+                "label": int(label),
             })
             if ngrams:
                 examples[-1]["ngrams"] = NGrams(words, ngrams)
