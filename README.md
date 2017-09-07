@@ -19,7 +19,7 @@ embedding tables.
 ## Implemented:
 - classification of text using word embeddings
 - char ngrams, hashed to n bins
-- train and test program
+- training and prediction program
 - preprocess facebook format, or text input into tensorflow records
 
 ## Not Implemented:
