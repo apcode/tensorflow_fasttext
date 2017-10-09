@@ -15,6 +15,7 @@ from __future__ import division
 from __future__ import print_function
 
 import inputs
+import sys
 import tensorflow as tf
 from tensorflow.contrib.layers import feature_column
 from tensorflow.contrib.learn.python.learn import learn_runner
@@ -55,8 +56,19 @@ tf.flags.DEFINE_integer("checkpoint_steps", 1000,
                         "Steps between saving checkpoints")
 tf.flags.DEFINE_integer("num_threads", 1, "Number of reader threads")
 tf.flags.DEFINE_boolean("log_device_placement", False, "log where ops are located")
+tf.flags.DEFINE_boolean("horovod", False,
+                        "Run across multiple GPUs using Horovod MPI. https://github.com/uber/horovod")
 tf.flags.DEFINE_boolean("debug", False, "Debug")
 FLAGS = tf.flags.FLAGS
+
+if FLAGS.horovod:
+    try:
+        import horovod.tensorflow as hvd
+    except ImportError, e:
+        print(e)
+        print("Make sure Horovod is installed: https://github.com/uber/horovod")
+        sys.exit(1)
+    hvd.init()
 
 
 def FeatureColumns(include_target):
@@ -122,6 +134,8 @@ def BasicEstimator(model_dir, config=None):
             # Squeeze dimensions from labels and switch to 0-offset
             labels = tf.squeeze(labels, -1)
             opt = tf.train.AdamOptimizer(params["learning_rate"])
+            if FLAGS.horovod:
+                opt = hvd.DistributedOptimizer(opt)
             train_op = opt.minimize(loss, global_step=tf.train.get_global_step())
             metrics = {
                 "accuracy": tf.metrics.accuracy(labels, predictions)
@@ -138,6 +152,8 @@ def BasicEstimator(model_dir, config=None):
             eval_metric_ops=metrics, export_outputs=exports)
     session_config = tf.ConfigProto(
         log_device_placement=FLAGS.log_device_placement)
+    if FLAGS.horovod:
+        session_config.gpu_options.visible_device_list = str(hvd.local_rank())
     config = tf.contrib.learn.RunConfig(
         save_checkpoints_secs=None,
         save_checkpoints_steps=FLAGS.checkpoint_steps,
@@ -175,22 +191,26 @@ def Experiment(output_dir):
 
 
 def FastTrain():
-    print("FastTrain")
+    print("FastTrain", FLAGS.train_steps)
     estimator = BasicEstimator(FLAGS.model_dir)
     print("TEST" + FLAGS.train_records)
     train_input = InputFn(tf.estimator.ModeKeys.TRAIN, FLAGS.train_records)
     print("STARTING TRAIN")
-    estimator.train(input_fn=train_input, steps=FLAGS.train_steps, hooks=None)
+    hooks = None
+    if FLAGS.horovod:
+        hooks = [hvd.BroadcastGlobalVariablesHook(0)]
+    estimator.train(input_fn=train_input, steps=FLAGS.train_steps, hooks=hooks)
     print("TRAIN COMPLETE")
-    print("EVALUATE")
-    eval_input = InputFn(tf.estimator.ModeKeys.EVAL, FLAGS.eval_records)
-    #eval_metrics = { "accuracy": tf.metrics.accuracy(labels, predictions) }
-    result = estimator.evaluate(input_fn=eval_input, steps=FLAGS.eval_steps, hooks=None)
-    print(result)
-    print("DONE")
-    if FLAGS.export_dir:
-        print("EXPORTING")
-        estimator.export_savedmodel(FLAGS.export_dir, ExportFn())
+    if not FLAGS.horovod or hvd.rank() == 0:
+        print("EVALUATE")
+        eval_input = InputFn(tf.estimator.ModeKeys.EVAL, FLAGS.eval_records)
+        #eval_metrics = { "accuracy": tf.metrics.accuracy(labels, predictions) }
+        result = estimator.evaluate(input_fn=eval_input, steps=FLAGS.eval_steps, hooks=None)
+        print(result)
+        print("DONE")
+        if FLAGS.export_dir:
+            print("EXPORTING")
+            estimator.export_savedmodel(FLAGS.export_dir, ExportFn())
 
 
 def ExportFn():
@@ -206,6 +226,12 @@ def ExportFn():
 def main(_):
     if not FLAGS.vocab_size:
         FLAGS.vocab_size = len(open(FLAGS.vocab_file).readlines())
+    if FLAGS.horovod:
+        nproc = hvd.size()
+        total = FLAGS.train_steps
+        FLAGS.train_steps = total / nproc
+        print("Running %d steps on each of %d processes for %d total" % (
+            FLAGS.train_steps, nproc, total))
     if FLAGS.fast:
         FastTrain()
     elif FLAGS.train_records:

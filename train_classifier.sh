@@ -55,7 +55,31 @@ VOCAB_SIZE=`cat $VOCAB | wc -l | sed -e "s/[ \t]//g"`
 echo $VOCAB
 echo $VOCAB_SIZE
 
-python classifier.py \
+# Uncomment if you don't have horovod installed.
+# python classifier.py \
+#     --train_records=$TRAIN_FILE \
+#     --eval_records=$TEST_FILE \
+#     --label_file=$LABELS \
+#     --vocab_file=$VOCAB \
+#     --vocab_size=$VOCAB_SIZE \
+#     --num_oov_vocab_buckets=100 \
+#     --model_dir=$OUTPUT \
+#     --export_dir=$EXPORT_DIR \
+#     --embedding_dimension=10 \
+#     --num_ngram_buckets=100000 \
+#     --ngram_embedding_dimension=10 \
+#     --learning_rate=0.01 \
+#     --batch_size=32 \
+#     --train_steps=5000 \
+#     --eval_steps=100 \
+#     --num_epochs=1 \
+#     --num_threads=1 \
+#     --nouse_ngrams \
+#     --nolog_device_placement \
+#     --fast \
+#     --debug
+
+mpirun -np 2 python classifier.py \
     --train_records=$TRAIN_FILE \
     --eval_records=$TEST_FILE \
     --label_file=$LABELS \
@@ -68,13 +92,13 @@ python classifier.py \
     --num_ngram_buckets=100000 \
     --ngram_embedding_dimension=10 \
     --learning_rate=0.01 \
-    --batch_size=256 \
-    --train_steps=2000 \
+    --batch_size=32 \
+    --train_steps=5000 \
     --eval_steps=100 \
     --num_epochs=1 \
     --num_threads=1 \
     --nouse_ngrams \
     --nolog_device_placement \
     --fast \
+    --horovod \
     --debug
-

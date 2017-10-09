@@ -16,6 +16,10 @@ embedding tables.
 
 << Still WIP >>
 
+You can use [Horovod](https://github.com/uber/horovod) to distribute
+training across multiple GPUs, one one or multiple servers. See usage
+section below.
+
 ## Implemented:
 - classification of text using word embeddings
 - char ngrams, hashed to n bins
@@ -71,6 +75,27 @@ this will only be the text embedding, not the ngram embeddings.
 Use the provided script to train easily:
 
     train_classifier.sh path-to-data-directory
+
+# Distributed Training
+
+To run training across multiple GPUs either on one or multiple
+servers. To do so you need to install MPI and
+[Horovod](https://github.com/uber/horovod) then add the `--horovod`
+option. It runs very close to the GPU multiple in terms of
+performance. I.e. if you have 2 GPUs on your server, it should run
+close to 2x the speed.
+
+    NUM_GPUS=2
+    mpirun -np $NUMGPUS python classifier.py \
+      --horovod \
+      --train_records=queries.tfrecords \
+      --eval_records=queries.tfrecords \
+      --label_file=labels.txt \
+      --vocab_file=vocab.txt \
+      --model_dir=model \
+      --export_dir=model
+
+The training script has this option added. `train_classifier.py`.
 
 # Facebook Examples
 
