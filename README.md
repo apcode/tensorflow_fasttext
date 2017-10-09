@@ -17,7 +17,7 @@ embedding tables.
 << Still WIP >>
 
 You can use [Horovod](https://github.com/uber/horovod) to distribute
-training across multiple GPUs, one one or multiple servers. See usage
+training across multiple GPUs, on one or multiple servers. See usage
 section below.
 
 ## Implemented:
@@ -78,7 +78,7 @@ Use the provided script to train easily:
 
 # Distributed Training
 
-To run training across multiple GPUs either on one or multiple
+You can run training across multiple GPUs either on one or multiple
 servers. To do so you need to install MPI and
 [Horovod](https://github.com/uber/horovod) then add the `--horovod`
 option. It runs very close to the GPU multiple in terms of
@@ -95,7 +95,7 @@ close to 2x the speed.
       --model_dir=model \
       --export_dir=model
 
-The training script has this option added. `train_classifier.py`.
+The training script has this option added: `train_classifier.py`.
 
 # Facebook Examples
 
