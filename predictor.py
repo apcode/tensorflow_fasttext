@@ -35,7 +35,7 @@ def RunModel(saved_model_dir, signature_def_key, text):
         if meta_graph_def.meta_info_def.tags == _TAG:
             meta_graph = meta_graph_def
     signature_def = signature_def_utils.get_signature_def_by_key(
-        meta_graph_def, signature_def_key)
+        meta_graph, signature_def_key)
     inputs_feed_dict = {
         signature_def.inputs["inputs"].name: ProcessInput(text)
     }
