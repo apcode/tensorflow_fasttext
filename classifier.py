@@ -95,7 +95,7 @@ def BasicEstimator(model_dir, config=None):
         text_ids = text_lookup_table.lookup(features["text"])
         text_embedding_w = tf.Variable(tf.random_uniform(
             [FLAGS.vocab_size + FLAGS.num_oov_vocab_buckets, FLAGS.embedding_dimension],
-            -1.0, 1.0))
+            -0.1, 0.1))
         text_embedding = tf.reduce_mean(tf.nn.embedding_lookup(
             text_embedding_w, text_ids), axis=-2)
         text_embedding = tf.expand_dims(text_embedding, -2)
@@ -104,7 +104,7 @@ def BasicEstimator(model_dir, config=None):
             ngram_hash = tf.string_to_hash_bucket(features["ngrams"],
                                                   FLAGS.num_ngram_buckets)
             ngram_embedding_w = tf.Variable(tf.random_uniform(
-            [FLAGS.num_ngram_buckets, FLAGS.ngram_embedding_dimension], -1.0, 1.0))
+                [FLAGS.num_ngram_buckets, FLAGS.ngram_embedding_dimension], -0.1, 0.1))
             ngram_embedding = tf.reduce_mean(tf.nn.embedding_lookup(
                 ngram_embedding_w, ngram_hash), axis=-2)
             ngram_embedding = tf.expand_dims(ngram_embedding, -2)
@@ -175,8 +175,9 @@ def Experiment(output_dir):
 
 
 def FastTrain():
-    print("Testing")
+    print("FastTrain")
     estimator = BasicEstimator(FLAGS.model_dir)
+    print("TEST" + FLAGS.train_records)
     train_input = InputFn(tf.estimator.ModeKeys.TRAIN, FLAGS.train_records)
     print("STARTING TRAIN")
     estimator.train(input_fn=train_input, steps=FLAGS.train_steps, hooks=None)
@@ -184,7 +185,7 @@ def FastTrain():
     print("EVALUATE")
     eval_input = InputFn(tf.estimator.ModeKeys.EVAL, FLAGS.eval_records)
     #eval_metrics = { "accuracy": tf.metrics.accuracy(labels, predictions) }
-    result = estimator.evaluate(input_fn=eval_input, steps=FLAGS.train_steps, hooks=None)
+    result = estimator.evaluate(input_fn=eval_input, steps=FLAGS.eval_steps, hooks=None)
     print(result)
     print("DONE")
     if FLAGS.export_dir:
