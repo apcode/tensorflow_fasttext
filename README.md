@@ -86,7 +86,7 @@ performance. I.e. if you have 2 GPUs on your server, it should run
 close to 2x the speed.
 
     NUM_GPUS=2
-    mpirun -np $NUMGPUS python classifier.py \
+    mpirun -np $NUM_GPUS python classifier.py \
       --horovod \
       --train_records=queries.tfrecords \
       --eval_records=queries.tfrecords \
