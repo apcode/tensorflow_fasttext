@@ -6,7 +6,7 @@ then
     exit 1
 fi
 
-if [[ ! -f $1/train.txt -o ! -f $1/valid.txt ]]
+if [[ ! -f $1/train.txt ]] || [[ ! -f $1/valid.txt ]]
 then
     echo "data_dir must contain train.txt and valid.txt from lang_dataset.sh"
     exit 2
