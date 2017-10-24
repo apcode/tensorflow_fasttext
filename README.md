@@ -97,7 +97,7 @@ You can then process the training and validation data using
 
 There is a utility script to do this for you:
 
-    python train_classifier.py datadir
+    python train_langdetect.py datadir
 
 
 # Distributed Training
