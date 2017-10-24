@@ -20,6 +20,14 @@ You can use [Horovod](https://github.com/uber/horovod) to distribute
 training across multiple GPUs, on one or multiple servers. See usage
 section below.
 
+## FastText Language Identification
+
+I have added utilities to train a classifier to detect languages, as
+described in [Fast and Accurate Language Identification using
+FastText](https://fasttext.cc/blog/2017/10/02/blog-post.html)
+
+See usage below. It basically works in the same way as default usage.
+
 ## Implemented:
 - classification of text using word embeddings
 - char ngrams, hashed to n bins
@@ -75,6 +83,22 @@ this will only be the text embedding, not the ngram embeddings.
 Use the provided script to train easily:
 
     train_classifier.sh path-to-data-directory
+
+# Language Identification
+
+To implement something similar to the method described in [Fast and
+Accurate Language Identification using
+FastText](https://fasttext.cc/blog/2017/10/02/blog-post.html) you need to download the data:
+
+    lang_dataset.sh [datadir]
+
+You can then process the training and validation data using
+`process_input.py` and `classifier.py` as described above.
+
+There is a utility script to do this for you:
+
+    python train_classifier.py datadir
+
 
 # Distributed Training
 
