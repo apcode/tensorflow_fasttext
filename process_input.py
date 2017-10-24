@@ -62,7 +62,7 @@ def ParseFacebookInput(inputfile, ngrams):
         label = match.group(1) if match else None
         # Strip out label and first ,
         first = 2 if words[1] == "," else 1
-        words = words[start:]
+        words = words[first:]
         examples.append({
             "text": words,
             "label": label
