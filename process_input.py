@@ -21,11 +21,13 @@ tf.flags.DEFINE_string("facebook_input", None,
                        "Input file in facebook train|test format")
 tf.flags.DEFINE_string("text_input", None,
                        """Input text file containing one text phrase per line.
-                       Must have --labels defined""")
+                       Must have --labels defined
+                       Used instead of --facebook_input""")
 tf.flags.DEFINE_string("labels", None,
                        """Input text file containing one label for
                        classification  per line.
-                       Must have --text_input defined.""")
+                       Must have --text_input defined.
+                       Used instead of --facebook_input""")
 tf.flags.DEFINE_string("ngrams", None,
                        "list of ngram sizes to create, e.g. --ngrams=2,3,4,5")
 tf.flags.DEFINE_string("output_dir", ".",
@@ -56,10 +58,11 @@ def ParseFacebookInput(inputfile, ngrams):
     for line in open(inputfile):
         words = line.split()
         # label is first field with __label__ removed
-        match = re.match(r'__label__([0-9]+)', words[0])
-        label = int(match.group(1)) if match else None
+        match = re.match(r'__label__(.+)', words[0])
+        label = match.group(1) if match else None
         # Strip out label and first ,
-        words = words[2:]
+        first = 2 if words[1] == "," else 1
+        words = words[start:]
         examples.append({
             "text": words,
             "label": label
@@ -78,7 +81,7 @@ def ParseTextInput(textfile, labelsfie, ngrams):
         for text, label in zip(f1, f2):
             examples.append({
                 "text": CleanText(text),
-                "label": int(label),
+                "label": label,
             })
             if ngrams:
                 examples[-1]["ngrams"] = NGrams(words, ngrams)
@@ -102,7 +105,8 @@ def WriteExamples(examples, outputfile, num_shards):
         record = tf.train.Example()
         text = [tf.compat.as_bytes(x) for x in example["text"]]
         record.features.feature["text"].bytes_list.value.extend(text)
-        record.features.feature["label"].int64_list.value.append(example["label"])
+        label = tf.compat.as_bytes(example["label"])
+        record.features.feature["label"].bytes_list.value.append(label)
         if "ngrams" in example:
             ngrams = [tf.compat.as_bytes(x) for x in example["ngrams"]]
             record.features.feature["ngrams"].bytes_list.value.extend(ngrams)

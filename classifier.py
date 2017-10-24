@@ -29,6 +29,7 @@ tf.flags.DEFINE_string("eval_records", None,
 tf.flags.DEFINE_string("predict_records", None,
                        "File pattern for TFRecords to predict, can use wildcards")
 tf.flags.DEFINE_string("label_file", None, "File containing output labels")
+tf.flags.DEFINE_integer("num_labels", None, "Number of output labels")
 tf.flags.DEFINE_string("vocab_file", None, "Vocabulary file, one word per line")
 tf.flags.DEFINE_integer("vocab_size", None, "Number of words in vocabulary")
 tf.flags.DEFINE_integer("num_oov_vocab_buckets", 20,
@@ -63,6 +64,7 @@ def FeatureColumns(include_target):
     return inputs.FeatureColumns(
         include_target, FLAGS.use_ngrams, FLAGS.vocab_file, FLAGS.vocab_size,
         FLAGS.embedding_dimension, FLAGS.num_oov_vocab_buckets,
+        FLAGS.label_file, FLAGS.num_labels,
         FLAGS.ngram_embedding_dimension, FLAGS.num_ngram_buckets)
 
 
@@ -70,6 +72,7 @@ def InputFn(mode, input_file):
     return inputs.InputFn(
         mode, FLAGS.use_ngrams, input_file, FLAGS.vocab_file, FLAGS.vocab_size,
         FLAGS.embedding_dimension, FLAGS.num_oov_vocab_buckets,
+        FLAGS.label_file, FLAGS.num_labels,
         FLAGS.ngram_embedding_dimension, FLAGS.num_ngram_buckets,
         FLAGS.batch_size, FLAGS.num_epochs, FLAGS.num_threads)
 
@@ -109,7 +112,10 @@ def BasicEstimator(model_dir, config=None):
                 ngram_embedding_w, ngram_hash), axis=-2)
             ngram_embedding = tf.expand_dims(ngram_embedding, -2)
             input_layer = tf.concat([text_embedding, ngram_embedding], -1)
-        num_classes = len(open(FLAGS.label_file).readlines())
+        num_classes = FLAGS.num_labels
+        label_lookup_table = tf.contrib.lookup.index_table_from_file(
+            FLAGS.label_file, vocab_size=FLAGS.num_labels)
+        labels = label_lookup_table.lookup(labels)
         logits = tf.contrib.layers.fully_connected(
             inputs=input_layer, num_outputs=num_classes,
             activation_fn=None)
@@ -205,6 +211,8 @@ def ExportFn():
 def main(_):
     if not FLAGS.vocab_size:
         FLAGS.vocab_size = len(open(FLAGS.vocab_file).readlines())
+    if not FLAGS.num_labels:
+        FLAGS.num_labels = len(open(FLAGS.label_file).readlines())
     if FLAGS.fast:
         FastTrain()
     elif FLAGS.train_records:

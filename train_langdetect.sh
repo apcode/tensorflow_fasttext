@@ -1,21 +1,26 @@
 #!/bin/bash
 
-if [[ ! -d "$1" ]]
+if [[ ! -d $1 ]]
 then
-    echo "Usage: train_classifer.sh data_dir [dataset_name=ag_news]"
+    echo "Usage: train_langdetect.sh data_dir"
     exit 1
+fi
+
+if [[ ! -f $1/train.txt -o ! -f $1/valid.txt ]]
+then
+    echo "data_dir must contain train.txt and valid.txt from lang_dataset.sh"
+    exit 2
 fi
 
 set +v
 
 DATADIR=$1
-DATASET=${2:-ag_news}
 OUTPUT=$DATADIR/models/${DATASET}
 EXPORT_DIR=$DATADIR/models/${DATASET}
-INPUT_TRAIN_FILE=$DATADIR/${DATASET}.train
-INPUT_TEST_FILE=$DATADIR/${DATASET}.test
-TRAIN_FILE=$DATADIR/${DATASET}.train.tfrecords-1-of-1
-TEST_FILE=$DATADIR/${DATASET}.test.tfrecords-1-of-1
+INPUT_TRAIN_FILE=$DATADIR/train.txt
+INPUT_TEST_FILE=$DATADIR/valid.txt
+TRAIN_FILE=$DATADIR/train.txt.tfrecords-1-of-1
+TEST_FILE=$DATADIR/valid.txt.tfrecords-1-of-1
 
 if [ ! -f ${TRAIN_FILE} ]; then
     echo Processing training dataset file
@@ -27,12 +32,13 @@ if [ ! -f ${TEST_FILE} ]; then
     python process_input.py --facebook_input=${INPUT_TEST_FILE} --ngrams=2,3,4
 fi
 
-LABELS=$DATADIR/${DATASET}.train.labels
-VOCAB=$DATADIR/${DATASET}.train.vocab
+LABELS=$DATADIR/train.txt.labels
+VOCAB=$DATADIR/train.txt.vocab
 VOCAB_SIZE=`cat $VOCAB | wc -l | sed -e "s/[ \t]//g"`
 
 echo $VOCAB
 echo $VOCAB_SIZE
+echo $LABELS
 
 python classifier.py \
     --train_records=$TRAIN_FILE \
@@ -40,7 +46,6 @@ python classifier.py \
     --label_file=$LABELS \
     --vocab_file=$VOCAB \
     --vocab_size=$VOCAB_SIZE \
-    --num_oov_vocab_buckets=100 \
     --model_dir=$OUTPUT \
     --export_dir=$EXPORT_DIR \
     --embedding_dimension=10 \
@@ -56,4 +61,3 @@ python classifier.py \
     --nolog_device_placement \
     --fast \
     --debug
-

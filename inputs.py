@@ -11,6 +11,8 @@ def FeatureColumns(include_target,
                    vocab_size,
                    embedding_dimension,
                    num_oov_vocab_buckets,
+                   label_file,
+                   label_size,
                    ngram_embedding_dimension=None,
                    num_ngram_hash_buckets=None):
     features = []
@@ -26,7 +28,8 @@ def FeatureColumns(include_target,
             ngram_ids, ngram_embedding_dimension)
         features.append(ngrams)
     if include_target:
-        label = tf.feature_column.numeric_column("label", dtype=tf.int64)
+        label = tf.feature_column.categorical_column_with_vocabulary_file(
+            "label", label_file, label_size)
         features.append(label)
     return set(features)
 
@@ -38,6 +41,8 @@ def InputFn(mode,
             vocab_size,
             embedding_dimension,
             num_oov_vocab_buckets,
+            label_file,
+            label_size,
             ngram_embedding_dimension,            
             num_ngram_hash_buckets,
             batch_size,
@@ -51,7 +56,7 @@ def InputFn(mode,
         if use_ngrams:
             parse_spec["ngrams"] = tf.VarLenFeature(dtype=tf.string)
         if include_target:
-            parse_spec["label"] = tf.FixedLenFeature(shape=(1,), dtype=tf.int64,
+            parse_spec["label"] = tf.FixedLenFeature(shape=(1,), dtype=tf.string,
                                                      default_value=None)
         print("ParseSpec", parse_spec)
         features = tf.contrib.learn.read_batch_features(
