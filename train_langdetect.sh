@@ -99,8 +99,8 @@ mpirun -np 2 python classifier.py \
     --ngram_embedding_dimension=10 \
     --learning_rate=0.01 \
     --batch_size=128 \
-    --train_steps=1000 \
-    --eval_steps=100 \
+    --train_steps=4000 \
+    --eval_steps=200 \
     --num_epochs=1 \
     --num_threads=1 \
     --nouse_ngrams \
