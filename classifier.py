@@ -125,9 +125,6 @@ def BasicEstimator(model_dir, config=None):
             ngram_embedding = tf.expand_dims(ngram_embedding, -2)
             input_layer = tf.concat([text_embedding, ngram_embedding], -1)
         num_classes = FLAGS.num_labels
-        label_lookup_table = tf.contrib.lookup.index_table_from_file(
-            FLAGS.label_file, vocab_size=FLAGS.num_labels)
-        labels = label_lookup_table.lookup(labels)
         logits = tf.contrib.layers.fully_connected(
             inputs=input_layer, num_outputs=num_classes,
             activation_fn=None)
@@ -135,6 +132,9 @@ def BasicEstimator(model_dir, config=None):
         loss, train_op = None, None
         metrics = {}
         if mode != tf.estimator.ModeKeys.PREDICT:
+            label_lookup_table = tf.contrib.lookup.index_table_from_file(
+                FLAGS.label_file, vocab_size=FLAGS.num_labels)
+            labels = label_lookup_table.lookup(labels)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=labels, logits=logits))
             # Squeeze dimensions from labels and switch to 0-offset
