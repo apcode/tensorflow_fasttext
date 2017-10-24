@@ -59,6 +59,7 @@ def InputFn(mode,
             parse_spec["label"] = tf.FixedLenFeature(shape=(1,), dtype=tf.string,
                                                      default_value=None)
         print("ParseSpec", parse_spec)
+        print("Input file:", input_file)
         features = tf.contrib.learn.read_batch_features(
             input_file, batch_size, parse_spec, tf.TFRecordReader,
             num_epochs=num_epochs, reader_num_threads=num_threads)

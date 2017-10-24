@@ -10,6 +10,7 @@ INPUT_FILE='/home/alan/Workspace/other/fastText/data/ag_news.train.tfrecords-1-o
 def test_parse_spec():
     fc = FeatureColumns(
         True,
+        False,
         VOCAB_FILE,
         VOCAB_SIZE,
         10,
@@ -49,32 +50,31 @@ def test_reading_inputs():
         example = tf.parse_single_example(
             record,
             parse_spec)
-        labels = example["label"]
-        labels1 = tf.subtract(labels, 1)
-        dense = tf.sparse_tensor_to_dense(example["text"], default_value=" ")
-
-        text_ids = text_lookup_table.lookup(dense)
+        text = example["text"]
+        labels = tf.subtract(example["label"], 1)
+        text_ids = text_lookup_table.lookup(text)
+        dense = tf.sparse_tensor_to_dense(text_ids)
+        print dense.shape
         text_embedding = tf.reduce_mean(tf.nn.embedding_lookup(
-            text_embedding_w, text_ids), axis=-2)
+            text_embedding_w, dense), axis=-2)
         print text_embedding.shape
         text_embedding = tf.expand_dims(text_embedding, -2)
         print text_embedding.shape
+        text_embedding_2 = tf.contrib.layers.bow_encoder(
+            dense, VOCAB_SIZE, ESZ)
+        print text_embedding_2.shape
         num_classes = 2
         logits = tf.contrib.layers.fully_connected(
             inputs=text_embedding, num_outputs=4,
             activation_fn=None)
         sess.run([tf.global_variables_initializer()])
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels1, logits=logits)
-        print sess.run([text_embedding, logits, labels, loss])
-        if n > 50:
+            labels=labels, logits=logits)
+        x = sess.run([text_embedding, text_embedding_2, logits, labels, loss])
+        print(len(x), list(str(x[i]) for i in range(len(x))))
+        if n > 2:
             break
         n += 1
-        # Test bow_encoder
-        text_embedding_2 = tf.contrib.layers.bow_encoder(
-            text_ids, VOCAB_SIZE, ESZ)
-        print text_embedding_2.shape
-        print sess.run(text_embedding_2)
 
 
 if __name__ == '__main__':
