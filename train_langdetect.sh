@@ -72,13 +72,13 @@ echo $LABELS
 #     --vocab_size=$VOCAB_SIZE \
 #     --model_dir=$OUTPUT \
 #     --export_dir=$EXPORT_DIR \
-#     --embedding_dimension=10 \
+#     --embedding_dimension=16 \
 #     --num_ngram_buckets=100000 \
-#     --ngram_embedding_dimension=10 \
+#     --ngram_embedding_dimension=16 \
 #     --learning_rate=0.01 \
 #     --batch_size=128 \
-#     --train_steps=1000 \
-#     --eval_steps=100 \
+#     --train_steps=5000 \
+#     --eval_steps=200 \
 #     --num_epochs=1 \
 #     --num_threads=1 \
 #     --nouse_ngrams \
@@ -94,12 +94,12 @@ mpirun -np 2 python classifier.py \
     --vocab_size=$VOCAB_SIZE \
     --model_dir=$OUTPUT \
     --export_dir=$EXPORT_DIR \
-    --embedding_dimension=10 \
+    --embedding_dimension=16 \
     --num_ngram_buckets=100000 \
-    --ngram_embedding_dimension=10 \
+    --ngram_embedding_dimension=16 \
     --learning_rate=0.01 \
     --batch_size=128 \
-    --train_steps=4000 \
+    --train_steps=5000 \
     --eval_steps=200 \
     --num_epochs=1 \
     --num_threads=1 \
