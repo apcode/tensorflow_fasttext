@@ -215,8 +215,14 @@ def FastTrain():
         print(result)
         print("DONE")
         if FLAGS.export_dir:
-            print("EXPORTING")
-            estimator.export_savedmodel(FLAGS.export_dir, ExportFn())
+            if FLAGS.use_ngrams:
+                print("WARNING NOT EXPORTING SAVED MODEL." +\
+                      "Unsupported: using multiple inputs in exported signatures" +\
+                      " is currently prohibited in TF1.3. This is being removed for" +\
+                      " 1.4 release. Fix coming soon.")
+            else:
+                print("EXPORTING")
+                estimator.export_savedmodel(FLAGS.export_dir, ExportFn())
 
 
 def ExportFn():

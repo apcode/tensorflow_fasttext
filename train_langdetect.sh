@@ -81,7 +81,7 @@ echo $LABELS
 #     --eval_steps=1000 \
 #     --num_epochs=1 \
 #     --num_threads=1 \
-#     --nouse_ngrams \
+#     --use_ngrams \
 #     --nolog_device_placement \
 #     --fast \
 #     --debug
@@ -103,7 +103,7 @@ mpirun -np 2 python classifier.py \
     --eval_steps=1000 \
     --num_epochs=1 \
     --num_threads=1 \
-    --nouse_ngrams \
+    --use_ngrams \
     --nolog_device_placement \
     --fast \
     --horovod \

@@ -99,6 +99,8 @@ There is a utility script to do this for you:
 
     train_langdetect.sh datadir
 
+It reaches about 96% accuracy using word embeddings and this increases to nearly 99% when 
+adding `--ngrams=2,3,4`
 
 # Distributed Training
 
