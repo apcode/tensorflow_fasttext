@@ -77,8 +77,8 @@ echo $LABELS
 #     --ngram_embedding_dimension=16 \
 #     --learning_rate=0.01 \
 #     --batch_size=128 \
-#     --train_steps=5000 \
-#     --eval_steps=200 \
+#     --train_steps=20000 \
+#     --eval_steps=1000 \
 #     --num_epochs=1 \
 #     --num_threads=1 \
 #     --nouse_ngrams \
@@ -99,8 +99,8 @@ mpirun -np 2 python classifier.py \
     --ngram_embedding_dimension=16 \
     --learning_rate=0.01 \
     --batch_size=128 \
-    --train_steps=5000 \
-    --eval_steps=200 \
+    --train_steps=20000 \
+    --eval_steps=1000 \
     --num_epochs=1 \
     --num_threads=1 \
     --nouse_ngrams \
