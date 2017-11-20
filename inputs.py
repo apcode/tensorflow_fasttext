@@ -5,33 +5,27 @@ Handles both training, evaluation and inference.
 import tensorflow as tf
 
 
-def FeatureColumns(include_target,
-                   use_ngrams,
-                   vocab_file,
-                   vocab_size,
-                   embedding_dimension,
-                   num_oov_vocab_buckets,
-                   label_file,
-                   label_size,
-                   ngram_embedding_dimension=None,
-                   num_ngram_hash_buckets=None):
-    features = []
-    word_ids = tf.feature_column.categorical_column_with_vocabulary_file(
-        "text", vocab_file, vocab_size, num_oov_buckets=num_oov_vocab_buckets)
-    words = tf.feature_column.embedding_column(
-        word_ids, embedding_dimension, combiner='sum')
-    features.append(words)
+def BuildTextExample(text, ngrams=None, label=None):
+    record = tf.train.Example()
+    text = [tf.compat.as_bytes(x) for x in text]
+    record.features.feature["text"].bytes_list.value.extend(text)
+    if label is not None:
+        label = tf.compat.as_bytes(label)
+        record.features.feature["label"].bytes_list.value.append(label)
+    if ngrams is not None:
+        ngrams = [tf.compat.as_bytes(x) for x in ngrams]
+        record.features.feature["ngrams"].bytes_list.value.extend(ngrams)
+    return record.SerializeToString()
+
+
+def ParseSpec(use_ngrams, include_target):
+    parse_spec = {"text": tf.VarLenFeature(dtype=tf.string)}
     if use_ngrams:
-        ngram_ids = tf.feature_column.categorical_column_with_hash_bucket(
-            "ngrams", num_ngram_hash_buckets)
-        ngrams = tf.feature_column.embedding_column(
-            ngram_ids, ngram_embedding_dimension)
-        features.append(ngrams)
+        parse_spec["ngrams"] = tf.VarLenFeature(dtype=tf.string)
     if include_target:
-        label = tf.feature_column.categorical_column_with_vocabulary_file(
-            "label", label_file, label_size)
-        features.append(label)
-    return set(features)
+        parse_spec["label"] = tf.FixedLenFeature(shape=(1,), dtype=tf.string,
+                                                 default_value=None)
+    return parse_spec
 
 
 def InputFn(mode,
@@ -52,24 +46,20 @@ def InputFn(mode,
         num_epochs=None
     def input_fn():
         include_target =  mode != tf.estimator.ModeKeys.PREDICT
-        parse_spec = {"text": tf.VarLenFeature(dtype=tf.string)}
-        if use_ngrams:
-            parse_spec["ngrams"] = tf.VarLenFeature(dtype=tf.string)
-        if include_target:
-            parse_spec["label"] = tf.FixedLenFeature(shape=(1,), dtype=tf.string,
-                                                     default_value=None)
+        parse_spec = ParseSpec(use_ngrams, include_target)
         print("ParseSpec", parse_spec)
         print("Input file:", input_file)
         features = tf.contrib.learn.read_batch_features(
             input_file, batch_size, parse_spec, tf.TFRecordReader,
             num_epochs=num_epochs, reader_num_threads=num_threads)
-        features["text"] = tf.sparse_tensor_to_dense(features["text"],
-                                                     default_value=" ")
-        if use_ngrams:
-            features["ngrams"] = tf.sparse_tensor_to_dense(features["ngrams"],
-                                                           default_value=" ")
         label = None
         if include_target:
             label = features.pop("label")
         return features, label
     return input_fn
+
+
+def ServingInputFn(use_ngrams):
+    parse_spec = ParseSpec(use_ngrams, include_target=False)
+    return tf.estimator.export.build_parsing_serving_input_receiver_fn(
+        parse_spec)

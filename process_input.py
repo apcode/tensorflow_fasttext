@@ -12,9 +12,10 @@ import os.path
 import re
 import sys
 import tensorflow as tf
+import inputs
+import text_utils
 from collections import Counter
 from six.moves import zip
-from nltk.tokenize import word_tokenize
 
 
 tf.flags.DEFINE_string("facebook_input", None,
@@ -37,18 +38,6 @@ tf.flags.DEFINE_integer("num_shards", 1,
 FLAGS = tf.flags.FLAGS
 
 
-def CleanText(text):
-    return word_tokenise(text.lower())
-
-
-def NGrams(words, ngrams):
-    nglist = []
-    for word in words:
-        for ng in ngrams:
-            nglist.extend([word[n:n+ng] for n in range(len(word)-ng+1)])
-    return nglist
-
-
 def ParseFacebookInput(inputfile, ngrams):
     """Parse input in the format used by facebook FastText.
     labels are formatted as __label__1
@@ -68,7 +57,7 @@ def ParseFacebookInput(inputfile, ngrams):
             "label": label
         })
         if ngrams:
-            examples[-1]["ngrams"] = NGrams(words, ngrams)
+            examples[-1]["ngrams"] = text_utils.GenerateNgrams(words, ngrams)
     return examples
 
 
@@ -80,11 +69,11 @@ def ParseTextInput(textfile, labelsfie, ngrams):
     with open(textfile) as f1, open(labelsfile) as f2:
         for text, label in zip(f1, f2):
             examples.append({
-                "text": CleanText(text),
+                "text": text_utils.TokenizeText(text),
                 "label": label,
             })
             if ngrams:
-                examples[-1]["ngrams"] = NGrams(words, ngrams)
+                examples[-1]["ngrams"] = text_utils.GenerateNgrams(words, ngrams)
     return examples
 
 
@@ -102,15 +91,9 @@ def WriteExamples(examples, outputfile, num_shards):
             shard += 1
             writer = tf.python_io.TFRecordWriter(outputfile + '-%d-of-%d' % \
                                                  (shard, num_shards))
-        record = tf.train.Example()
-        text = [tf.compat.as_bytes(x) for x in example["text"]]
-        record.features.feature["text"].bytes_list.value.extend(text)
-        label = tf.compat.as_bytes(example["label"])
-        record.features.feature["label"].bytes_list.value.append(label)
-        if "ngrams" in example:
-            ngrams = [tf.compat.as_bytes(x) for x in example["ngrams"]]
-            record.features.feature["ngrams"].bytes_list.value.extend(ngrams)
-        writer.write(record.SerializeToString())
+        record = inputs.BuildTextExample(
+            example["text"], example.get("ngrams", None), example["label"])
+        writer.write(record)
 
 
 def WriteVocab(examples, vocabfile, labelfile):
@@ -138,8 +121,7 @@ def main(_):
         sys.exit(1)
     ngrams = None
     if FLAGS.ngrams:
-        ngrams = [int(g) for g in FLAGS.ngrams.split(',')]
-        ngrams = [g for g in ngrams if (g > 1 and g < 7)]
+        ngrams = text_utils.ParseNgramsOpts(FLAGS.ngrams)
     if FLAGS.facebook_input:
         inputfile = FLAGS.facebook_input
         examples = ParseFacebookInput(FLAGS.facebook_input, ngrams)
