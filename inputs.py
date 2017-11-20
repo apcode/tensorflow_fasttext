@@ -5,35 +5,6 @@ Handles both training, evaluation and inference.
 import tensorflow as tf
 
 
-def FeatureColumns(include_target,
-                   use_ngrams,
-                   vocab_file,
-                   vocab_size,
-                   embedding_dimension,
-                   num_oov_vocab_buckets,
-                   label_file,
-                   label_size,
-                   ngram_embedding_dimension=None,
-                   num_ngram_hash_buckets=None):
-    features = []
-    word_ids = tf.feature_column.categorical_column_with_vocabulary_file(
-        "text", vocab_file, vocab_size, num_oov_buckets=num_oov_vocab_buckets)
-    words = tf.feature_column.embedding_column(
-        word_ids, embedding_dimension, combiner='sum')
-    features.append(words)
-    if use_ngrams:
-        ngram_ids = tf.feature_column.categorical_column_with_hash_bucket(
-            "ngrams", num_ngram_hash_buckets)
-        ngrams = tf.feature_column.embedding_column(
-            ngram_ids, ngram_embedding_dimension)
-        features.append(ngrams)
-    if include_target:
-        label = tf.feature_column.categorical_column_with_vocabulary_file(
-            "label", label_file, label_size)
-        features.append(label)
-    return set(features)
-
-
 def InputFn(mode,
             use_ngrams,
             input_file,

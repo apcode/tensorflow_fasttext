@@ -18,9 +18,7 @@ import inputs
 import sys
 import tensorflow as tf
 from tensorflow.contrib.layers import feature_column
-from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.learn.python.learn.estimators.run_config import RunConfig
-from tensorflow.contrib.learn.python.learn.metric_spec import MetricSpec
 
 
 tf.flags.DEFINE_string("train_records", None,
@@ -45,7 +43,6 @@ tf.flags.DEFINE_integer("num_ngram_buckets", 1000000,
                         "Number of hash buckets for ngrams")
 tf.flags.DEFINE_integer("ngram_embedding_dimension", 10, "Dimension of word embedding")
 
-tf.flags.DEFINE_boolean("fast", False, "Run fastest training without full experiment")
 tf.flags.DEFINE_float("learning_rate", 0.001, "Learning rate for training")
 tf.flags.DEFINE_float("clip_gradient", 5.0, "Clip gradient norm to this ratio")
 tf.flags.DEFINE_integer("batch_size", 128, "Training minibatch size")
@@ -72,14 +69,6 @@ if FLAGS.horovod:
     hvd.init()
 
 
-def FeatureColumns(include_target):
-    return inputs.FeatureColumns(
-        include_target, FLAGS.use_ngrams, FLAGS.vocab_file, FLAGS.vocab_size,
-        FLAGS.embedding_dimension, FLAGS.num_oov_vocab_buckets,
-        FLAGS.label_file, FLAGS.num_labels,
-        FLAGS.ngram_embedding_dimension, FLAGS.num_ngram_buckets)
-
-
 def InputFn(mode, input_file):
     return inputs.InputFn(
         mode, FLAGS.use_ngrams, input_file, FLAGS.vocab_file, FLAGS.vocab_size,
@@ -87,17 +76,6 @@ def InputFn(mode, input_file):
         FLAGS.label_file, FLAGS.num_labels,
         FLAGS.ngram_embedding_dimension, FLAGS.num_ngram_buckets,
         FLAGS.batch_size, FLAGS.num_epochs, FLAGS.num_threads)
-
-
-def ContribEstimator(model_dir, config=None):
-    num_classes = len(open(FLAGS.label_file).readlines())
-    features = FeatureColumns(False)
-    model = tf.contrib.learn.LinearClassifier(
-        features, model_dir, n_classes=num_classes,
-        optimizer=tf.train.AdamOptimizer(FLAGS.learning_rate),
-        gradient_clip_norm=FLAGS.clip_gradient,
-        config=config)
-    return model
 
 
 def BasicEstimator(model_dir, config=None):
@@ -168,34 +146,6 @@ def BasicEstimator(model_dir, config=None):
                                   params=params, config=config)
 
 
-def Experiment(output_dir):
-    """Construct an experiment for training and evaluating a model.
-    Saves checkpoints and exports the model for tf serving.
-    """
-    mode = tf.estimator.ModeKeys.TRAIN
-    config = tf.contrib.learn.RunConfig(
-        save_checkpoints_secs=None,
-        save_checkpoints_steps=FLAGS.checkpoint_steps)
-    train_input = InputFn(mode, FLAGS.train_records)
-    eval_input = InputFn(mode, FLAGS.eval_records)
-    estimator = ContribEstimator(output_dir, config)
-    export_strategies = []
-    if FLAGS.export_dir:
-        export_strategies.append(MakeExportStrategy())
-    experiment = tf.contrib.learn.Experiment(
-        estimator=estimator,
-        train_input_fn=train_input,
-        eval_input_fn=eval_input,
-        train_steps=FLAGS.train_steps,
-        eval_steps=FLAGS.eval_steps,
-        eval_delay_secs=0,
-        eval_metrics=None,
-        continuous_eval_throttle_secs=10,
-        min_eval_frequency=1000,
-        train_monitors=None)
-    return experiment
-
-
 def FastTrain():
     print("FastTrain", FLAGS.train_steps)
     estimator = BasicEstimator(FLAGS.model_dir)
@@ -246,13 +196,8 @@ def main(_):
         FLAGS.train_steps = total / nproc
         print("Running %d steps on each of %d processes for %d total" % (
             FLAGS.train_steps, nproc, total))
-    if FLAGS.fast:
-        FastTrain()
-    elif FLAGS.train_records:
-        if FLAGS.export_dir:
-            tf.logging.warn(
-                "Exporting savedmodels not supported for contrib experiment, --nofast")
-        learn_runner.run(experiment_fn=Experiment, output_dir=FLAGS.model_dir)
+    FastTrain()
+
 
 if __name__ == '__main__':
     if FLAGS.debug:
