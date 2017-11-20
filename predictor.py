@@ -39,7 +39,7 @@ def RunModel(saved_model_dir, signature_def_key, tag, text, ngrams_list=None):
     ngrams = None
     if ngrams_list is not None:
         ngrams_list = text_utils.ParseNgramsOpts(ngrams_list)
-        ngrams = inputs.GenerateNgrams(text, ngrams_list)
+        ngrams = text_utils.GenerateNgrams(text, ngrams_list)
     example = inputs.BuildTextExample(text, ngrams=ngrams)
     inputs_feed_dict = {
         signature_def.inputs["inputs"].name: [example],
