@@ -42,6 +42,7 @@ tf.flags.DEFINE_boolean("use_ngrams", False, "Use character ngrams in embedding"
 tf.flags.DEFINE_integer("num_ngram_buckets", 1000000,
                         "Number of hash buckets for ngrams")
 tf.flags.DEFINE_integer("ngram_embedding_dimension", 10, "Dimension of word embedding")
+
 tf.flags.DEFINE_float("learning_rate", 0.001, "Learning rate for training")
 tf.flags.DEFINE_float("clip_gradient", 5.0, "Clip gradient norm to this ratio")
 tf.flags.DEFINE_integer("batch_size", 128, "Training minibatch size")
