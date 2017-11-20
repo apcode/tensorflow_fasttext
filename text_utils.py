@@ -2,7 +2,7 @@ from nltk.tokenize import word_tokenize
 
 
 def TokenizeText(text):
-    return word_tokenise(text.lower())
+    return word_tokenize(text.lower())
 
 
 def ParseNgramsOpts(opts):

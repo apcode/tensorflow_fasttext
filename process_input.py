@@ -68,8 +68,9 @@ def ParseTextInput(textfile, labelsfie, ngrams):
     examples = []
     with open(textfile) as f1, open(labelsfile) as f2:
         for text, label in zip(f1, f2):
+            words = text_utils.TokenizeText(text)
             examples.append({
-                "text": text_utils.TokenizeText(text),
+                "text": words,
                 "label": label,
             })
             if ngrams:

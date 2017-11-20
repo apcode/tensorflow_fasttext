@@ -1,5 +1,0 @@
-# Some todo items
-
-- replicate experiments from facebook paper, times and accuracy
-- provide scripts to download and process facebook's data
-- allow preloading of word embeddings, say from word2ved cbow and skipgrams
