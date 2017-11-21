@@ -94,7 +94,7 @@ def WriteExamples(examples, outputfile, num_shards):
                                                  (shard, num_shards))
         record = inputs.BuildTextExample(
             example["text"], example.get("ngrams", None), example["label"])
-        writer.write(record)
+        writer.write(record.SerializeToString())
 
 
 def WriteVocab(examples, vocabfile, labelfile):

@@ -41,6 +41,7 @@ def RunModel(saved_model_dir, signature_def_key, tag, text, ngrams_list=None):
         ngrams_list = text_utils.ParseNgramsOpts(ngrams_list)
         ngrams = text_utils.GenerateNgrams(text, ngrams_list)
     example = inputs.BuildTextExample(text, ngrams=ngrams)
+    example = example.SerializeToString()
     inputs_feed_dict = {
         signature_def.inputs["inputs"].name: [example],
     }
@@ -64,8 +65,8 @@ def main(_):
     outputs = RunModel(FLAGS.saved_model, FLAGS.signature_def, FLAGS.tag,
                        FLAGS.text, FLAGS.ngrams)
     if FLAGS.signature_def == "proba":
-        print("Proba:", outputs[0])
-        print("Class(1-N):", np.argmax(outputs[0]) + 1)
+        print("Proba:", outputs)
+        print("Class(1-N):", np.argmax(outputs) + 1)
     elif FLAGS.signature_def == "embedding":
         print(outputs[0])
 

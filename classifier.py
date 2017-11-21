@@ -106,7 +106,6 @@ def FastTextEstimator(model_dir, config=None):
             -0.1, 0.1))
         text_embedding = tf.reduce_mean(tf.nn.embedding_lookup(
             text_embedding_w, text_ids), axis=-2)
-        text_embedding = tf.expand_dims(text_embedding, -2)
         input_layer = text_embedding
         if FLAGS.use_ngrams:
             ngram_hash = tf.string_to_hash_bucket(features["ngrams"],
@@ -131,8 +130,6 @@ def FastTextEstimator(model_dir, config=None):
             labels = label_lookup_table.lookup(labels)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=labels, logits=logits))
-            # Squeeze dimensions from labels and switch to 0-offset
-            labels = tf.squeeze(labels, -1)
             opt = tf.train.AdamOptimizer(params["learning_rate"])
             if FLAGS.horovod:
                 opt = hvd.DistributedOptimizer(opt)

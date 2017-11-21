@@ -15,7 +15,7 @@ def BuildTextExample(text, ngrams=None, label=None):
     if ngrams is not None:
         ngrams = [tf.compat.as_bytes(x) for x in ngrams]
         record.features.feature["ngrams"].bytes_list.value.extend(ngrams)
-    return record.SerializeToString()
+    return record
 
 
 def ParseSpec(use_ngrams, include_target):
@@ -23,7 +23,7 @@ def ParseSpec(use_ngrams, include_target):
     if use_ngrams:
         parse_spec["ngrams"] = tf.VarLenFeature(dtype=tf.string)
     if include_target:
-        parse_spec["label"] = tf.FixedLenFeature(shape=(1,), dtype=tf.string,
+        parse_spec["label"] = tf.FixedLenFeature(shape=(), dtype=tf.string,
                                                  default_value=None)
     return parse_spec
 
