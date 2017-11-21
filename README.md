@@ -127,8 +127,8 @@ The training script has this option added: `train_classifier.py`.
 
 As well as using `predictor.py` to run a saved model to provide
 predictions, it is easy to serve a saved model using Tensorflow
-Serving and gRPC. There is a supplied simple rpc client that provides
-predictions by using a gRPC server.
+Serving and gRPC. There is a supplied simple rpc client (`predictor_client.py`)
+that provides predictions by using a gRPC server.
 
 First make sure you install the tensorflow serving binaries. Instructions are [here](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/setup.md#installing-the-modelserver).
 
