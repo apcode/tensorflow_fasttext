@@ -1,6 +1,6 @@
 # FastText in Tensorflow
 
-This based on the ideas in Facebook's [FastText](https://github.com/facebookresearch/fastText) but implemented in
+This project is based on the ideas in Facebook's [FastText](https://github.com/facebookresearch/fastText) but implemented in
 Tensorflow. However, it is not an exact replica of fastText.
 
 Classification is done by embedding each word, taking the mean
