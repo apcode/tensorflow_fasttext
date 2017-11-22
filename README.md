@@ -32,19 +32,20 @@ See usage below. It basically works in the same way as default usage.
 - classification of text using word embeddings
 - char ngrams, hashed to n bins
 - training and prediction program
+- serve models on tensorflow serving
 - preprocess facebook format, or text input into tensorflow records
 
 ## Not Implemented:
-- separate word vector training
+- separate word vector training (though can export embeddings)
 - heirarchical softmax.
-- quantize models
+- quantize models (supported by tensorflow, but I haven't tried it yet)
 
 # Usage
 
 The following are examples of how to use the applications. Get full help with
 `--help` option on any of the programs.
 
-To transform input data into tensorflow Example format, an example:
+To transform input data into tensorflow Example format:
 
     process_input.py --facebook_input=queries.txt --output_dir=. --ngrams=2,3,4
 
@@ -127,8 +128,8 @@ The training script has this option added: `train_classifier.py`.
 
 As well as using `predictor.py` to run a saved model to provide
 predictions, it is easy to serve a saved model using Tensorflow
-Serving and gRPC. There is a supplied simple rpc client (`predictor_client.py`)
-that provides predictions by using a gRPC server.
+Serving with a client server setup. There is a supplied simple rpc client (`predictor_client.py`)
+that provides predictions by using tensorflow server.
 
 First make sure you install the tensorflow serving binaries. Instructions are [here](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/setup.md#installing-the-modelserver).
 
