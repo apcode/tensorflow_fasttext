@@ -122,7 +122,7 @@ close to 2x the speed.
       --model_dir=model \
       --export_dir=model
 
-The training script has this option added: `train_classifier.py`.
+The training script has this option added: `train_classifier.sh`.
 
 # Tensorflow Serving
 
