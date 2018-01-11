@@ -77,7 +77,6 @@ echo $VOCAB_SIZE
 #     --num_threads=1 \
 #     --nouse_ngrams \
 #     --nolog_device_placement \
-#     --fast \
 #     --debug
 
 mpirun -np 2 python classifier.py \
@@ -100,6 +99,5 @@ mpirun -np 2 python classifier.py \
     --num_threads=1 \
     --nouse_ngrams \
     --nolog_device_placement \
-    --fast \
     --horovod \
     --debug
