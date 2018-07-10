@@ -34,7 +34,7 @@ FLAGS = tf.flags.FLAGS
 def Request(text, ngrams):
     text = text_utils.TokenizeText(text)
     ngrams = None
-    if ngrams is not None:
+    if ngrams_list is not None:
         ngrams_list = text_utils.ParseNgramsOpts(ngrams)
         ngrams = text_utils.GenerateNgrams(text, ngrams_list)
     example = inputs.BuildTextExample(text, ngrams=ngrams)
